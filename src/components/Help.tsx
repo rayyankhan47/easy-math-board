@@ -83,7 +83,10 @@ export function Help() {
               eliminate a variable
             </li>
             <li>graphs: drag a vertex · click two vertices to toggle an edge</li>
+            <li>planes and surfaces: drag inside to pan or orbit, scroll to zoom</li>
+            <li>paste or drop an image anywhere on the board</li>
             <li>scroll to pan · ⌘-scroll to zoom · backspace to delete</li>
+            <li>drag an object by the ⋯ grip above it</li>
           </ul>
         </div>
       </div>

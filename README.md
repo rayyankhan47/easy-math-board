@@ -16,7 +16,8 @@ Click anywhere and type. The right thing appears.
 |---|---|
 | `K5` · `petersen` · `graph 6 nodes` · `cycle 7` | a graph you can drag and rewire |
 | `matrix 3x3` · `identity 4` · `cayley 5` | an editable grid, live properties |
-| `plot sin(x)/x` · `plot x^2, x^3 from -3 to 3` | curves |
+| `plot sin(a*x)` · `plane` | a Cartesian plane you pan and zoom, with sliders |
+| `surface x^2 - y^2` | a 3D surface you orbit |
 | `primes to 100` · `divisors of 60` · `mod 7 = 3` | an integer strip |
 | `clock 12 step 5` | ℤ_n as a dial |
 | `V - E + F = 2` · `alpha >= pi` | rendered maths |
@@ -44,6 +45,11 @@ E = 3V               appears
 
 Swap the first line for `V - E + F = 2` and the same two clicks give you
 `E = 3V - 6`, the planar bound.
+
+Paste or drop an image anywhere. Select any object for its properties —
+text gets font, size, colour, bold and italic. Light, dark and system themes.
+
+See [DEPLOY.md](DEPLOY.md) for putting it online with accounts.
 
 ## Design rules
 
