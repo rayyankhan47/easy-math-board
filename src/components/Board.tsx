@@ -18,6 +18,10 @@ import { SurfaceObject } from "./objects/SurfaceObject";
 import { ImageObject } from "./objects/ImageObject";
 import { ThemeToggle } from "./ThemeToggle";
 import { imageFrom, storeImage } from "@/lib/images";
+import { Toolbar } from "./Toolbar";
+import { ShareBar } from "./ShareBar";
+import { Cursors } from "./Cursors";
+import { publishCursor } from "@/lib/collab";
 import type { Obj } from "@/lib/types";
 
 export function Board() {
@@ -92,12 +96,13 @@ export function Board() {
   }
 
   function onMove(e: React.PointerEvent) {
+    const w = toWorld(e.clientX, e.clientY);
+    publishCursor(w.x, w.y);
     if (panning.current) {
       const p = panning.current;
       setView({ x: p.ox + (e.clientX - p.px), y: p.oy + (e.clientY - p.py) }, zoom);
     } else if (dragging.current) {
       const d = dragging.current;
-      const w = toWorld(e.clientX, e.clientY);
       move(d.id, w.x - d.ox, w.y - d.oy);
     }
   }
@@ -202,11 +207,15 @@ export function Board() {
         ))}
 
         {caret && <CommandInput at={caret} onDone={() => setCaret(null)} />}
+        <Cursors />
       </div>
 
-      <div className="absolute top-4 left-4 z-30">
+      <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+        <ShareBar />
         <ThemeToggle />
       </div>
+
+      <Toolbar onText={(at) => { select(null); setCaret(at); }} />
       <Inspector />
       <OpsBar />
 

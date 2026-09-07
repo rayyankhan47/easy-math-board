@@ -18,6 +18,9 @@
     "pyodide": "^314.0.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "y-protocols": "^1.0.7",
+    "y-webrtc": "^10.3.0",
+    "yjs": "^13.6.32",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

@@ -7,8 +7,13 @@ import { DEFAULT_STYLE, uid } from "./types";
 import { CURVE_INK } from "@/components/objects/PlaneObject";
 import { bipartiteNodes, circleNodes, gridNodes, pairsToEdges, treeNodes } from "./graphs";
 import { paramsIn } from "./axes";
+import { isApplyingRemote, publish } from "./collab";
 
-const KEY = "board.v1";
+const LOCAL_KEY = "board.v1";
+/** A shared room persists under its own key so local work is never clobbered. */
+let KEY = LOCAL_KEY;
+export const setPersistKey = (room: string | null) =>
+  (KEY = room ? `board.room.${room}` : LOCAL_KEY);
 
 interface Board {
   objs: Obj[];
@@ -24,6 +29,8 @@ interface Board {
   setView: (pan: { x: number; y: number }, zoom: number) => void;
   hydrate: () => Promise<void>;
   clear: () => void;
+  /** Replace everything, e.g. when a room hands us its contents. */
+  replaceAll: (objs: Obj[]) => void;
 }
 
 function specToObj(spec: Spec, at: { x: number; y: number }): Obj {
@@ -95,9 +102,12 @@ function specToObj(spec: Spec, at: { x: number; y: number }): Obj {
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Save locally and mirror to the room, unless this change *came* from the room. */
 const persist = (objs: Obj[]) => {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => void idbSet(KEY, objs), 250);
+  if (!isApplyingRemote()) publish(objs);
 };
 
 export const useBoard = create<Board>((set, get) => ({
@@ -157,5 +167,10 @@ export const useBoard = create<Board>((set, get) => ({
   clear: () => {
     void idbSet(KEY, []);
     set({ objs: [], selection: [] });
+  },
+
+  replaceAll: (objs) => {
+    void idbSet(KEY, objs);
+    set((s) => ({ objs, selection: s.selection.filter((id) => objs.some((o) => o.id === id)) }));
   },
 }));

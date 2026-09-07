@@ -87,6 +87,11 @@ export function Help() {
             <li>paste or drop an image anywhere on the board</li>
             <li>scroll to pan · ⌘-scroll to zoom · backspace to delete</li>
             <li>drag an object by the ⋯ grip above it</li>
+            <li>the left toolbar spawns anything — hover an icon for what it is</li>
+            <li>
+              <span className="text-[var(--accent-soft)]">Share</span> makes a link; anyone who
+              opens it joins the same board, with their own cursor
+            </li>
           </ul>
         </div>
       </div>

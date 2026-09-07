@@ -46,6 +46,19 @@ E = 3V               appears
 Swap the first line for `V - E + F = 2` and the same two clicks give you
 `E = 3V - 6`, the planar bound.
 
+There is a toolbar down the left for everything, if you would rather click than
+type — hover an icon for a moment and it tells you what it is.
+
+## Working together
+
+Press **Share**. You get a link; anyone who opens it lands on the same board and
+gets their own coloured cursor. No account, no sign-in, nothing to install.
+
+It is peer-to-peer (Yjs over WebRTC) — the board data never touches a server.
+A public signalling server introduces the peers to each other; point it at your
+own with `NEXT_PUBLIC_SIGNALING=wss://your-server` if you would rather not
+depend on someone else's.
+
 Paste or drop an image anywhere. Select any object for its properties —
 text gets font, size, colour, bold and italic. Light, dark and system themes.
 
