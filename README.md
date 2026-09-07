@@ -15,5 +15,5 @@ npm run dev
 ```
 
 `npm install` also pulls down the Python runtime (SymPy and NetworkX, ~21MB)
-into `public/pyodide` — it isn't in the repo. `npm run pyodide` redoes that by
+into `public/pyodide`, which isn't in the repo. `npm run pyodide` redoes that by
 hand if it ever goes missing.
