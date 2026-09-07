@@ -13,7 +13,7 @@ Everything here is deterministic. No model in the loop.
 |---|---|
 | S1 Expression | ✅ typed freely, rendered with KaTeX |
 | S2 Binding | ⬜ not yet — values do not flow between objects |
-| S3 Manipulation | ✅ simplify · expand · factor · solve · diff · integrate · **substitute · eliminate** |
+| S3 Manipulation | ✅ simplify · expand · factor · solve · diff · integrate · **substitute · eliminate** · partials, gradient, Hessian |
 | S4 Ink | ✅ pen, highlighter, arrows, eraser — never tidied |
 | P1 Grid | ✅ matrices (rank, det, trace) and Cayley tables (full group axioms) |
 | P2 Graph | ✅ 12 families, drag/rewire, real planarity, girth, χ, diameter, cliques |

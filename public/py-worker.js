@@ -123,6 +123,22 @@ def op_graph(nodes, edges):
             else max((len(c) for c in nx.find_cliques(G)), default=0)
     return out
 
+def op_gradient(a, vars):
+    e = _eq(a)
+    if isinstance(e, Equality):
+        e = e.rhs
+    parts = [simplify(diff(e, Symbol(v))) for v in vars]
+    return {"text": "(" + ", ".join(str(p) for p in parts) + ")",
+            "latex": r"\nabla f = \left(" + ",\\ ".join(latex(p) for p in parts) + r"\right)"}
+
+def op_hessian(a, vars):
+    e = _eq(a)
+    if isinstance(e, Equality):
+        e = e.rhs
+    syms = [Symbol(v) for v in vars]
+    rows = [[str(simplify(diff(e, p, q))) for q in syms] for p in syms]
+    return {"cells": rows, "vars": list(vars)}
+
 def op_matrix(cells, what):
     M = Matrix([[_p(str(c) if str(c).strip() else "0") for c in row] for row in cells])
     if what == "det":

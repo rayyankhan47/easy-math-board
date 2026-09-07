@@ -4,7 +4,7 @@ import { create } from "zustand";
 
 export type Theme = "light" | "dark" | "system";
 
-const KEY = "margin.theme";
+const KEY = "emb.theme";
 
 function apply(t: Theme) {
   const root = document.documentElement;

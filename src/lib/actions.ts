@@ -1,7 +1,7 @@
 "use client";
 
 import { ops } from "./engine";
-import { isDefinition, pickVar, rhs } from "./axes";
+import { guessVars, isDefinition, pickVar, rhs } from "./axes";
 import { complete, pairsToEdges, circleNodes, cycle, degrees, chromatic } from "./graphs";
 import { shapeFacts, tidy as sTidy } from "./shapes";
 import type { GraphObj, MatrixObj, Obj, ObjKind, PlaneObj, ShapeObj, Spec, StripObj, SurfaceObj, ClockObj } from "./types";
@@ -358,13 +358,102 @@ export const ACTIONS: Action[] = [
   },
 ];
 
-/** Actions available for one object — an empty `kinds` means "anything". */
-export function actionsFor(kind: ObjKind): Action[] {
-  return ACTIONS.filter((a) => a.kinds.length === 0 || a.kinds.includes(kind));
+/* ------------------------------------------------------- per-variable ops */
+
+const partial = (v: string, many: boolean): Action => ({
+  id: `d-${v}`,
+  label: many ? `\u2202/\u2202${v}` : `derivative (${v})`,
+  hint: many ? `partial with respect to ${v}` : `d/d${v} of this`,
+  kinds: ["text"],
+  aliases: ["derivative", "differentiate", "partial", "d/d" + v, "slope"],
+  run: (o, c) => sym(c, ops.diff(rhs((o as { raw: string }).raw), v)),
+});
+
+const integrateBy = (v: string, many: boolean): Action => ({
+  id: `i-${v}`,
+  label: many ? `\u222b d${v}` : `integral (d${v})`,
+  hint: `antiderivative in ${v}`,
+  kinds: ["text"],
+  aliases: ["integral", "integrate", "antiderivative"],
+  run: (o, c) => sym(c, ops.integrate(rhs((o as { raw: string }).raw), v)),
+});
+
+const solveFor = (v: string): Action => ({
+  id: `s-${v}`,
+  label: `solve for ${v}`,
+  hint: `rearrange in ${v}`,
+  kinds: ["text"],
+  aliases: ["solve", "roots", "zeros"],
+  run: (o, c) => {
+    const src = (o as { raw: string }).raw;
+    return sym(c, ops.solve(isDefinition(src) ? rhs(src) : src, v));
+  },
+});
+
+const gradient = (vars: string[]): Action => ({
+  id: "gradient",
+  label: "gradient",
+  hint: `\u2207f over ${vars.join(", ")}`,
+  kinds: ["text"],
+  aliases: ["grad", "nabla", "del", "partials"],
+  run: async (o, c) => {
+    const r = await ops.gradient(rhs((o as { raw: string }).raw), vars);
+    if (r.error) return c.fail(r.error);
+    asText(c, (r.text as string) ?? "", (r.latex as string) ?? null);
+  },
+});
+
+const hessian = (vars: string[]): Action => ({
+  id: "hessian",
+  label: "Hessian",
+  hint: "second partials, as a matrix",
+  kinds: ["text"],
+  aliases: ["second derivative", "curvature", "critical points"],
+  run: async (o, c) => {
+    const r = await ops.hessian(rhs((o as { raw: string }).raw), vars);
+    if (r.error) return c.fail(r.error);
+    const cells = r.cells as string[][];
+    c.add(
+      { kind: "matrix", rows: cells.length, cols: cells[0]?.length ?? 0, cells, label: "H" },
+      c.below(),
+    );
+  },
+});
+
+/**
+ * Actions for one object. Maths gets a menu shaped by the variables it actually
+ * uses, so a two-variable function offers partials rather than a single d/dx.
+ */
+export function actionsFor(o: Obj): Action[] {
+  const base = ACTIONS.filter((a) => a.kinds.length === 0 || a.kinds.includes(o.kind));
+  if (o.kind !== "text" || !o.latex) return base;
+
+  const vars = guessVars(o.raw);
+  if (vars.length <= 1) {
+    const v = vars[0];
+    // Name the variable in the hints rather than assuming x.
+    return base.map((a) =>
+      a.id === "derivative" ? { ...a, hint: v ? `d/d${v} of this` : "differentiate this" }
+      : a.id === "integral" ? { ...a, hint: v ? `antiderivative in ${v}` : "antiderivative" }
+      : a.id === "solve" ? { ...a, hint: v ? `for ${v}` : "for its variable" }
+      : a,
+    );
+  }
+
+  // Several variables: replace the single-variable entries with explicit ones.
+  const rest = base.filter((a) => !["derivative", "integral", "solve"].includes(a.id));
+  return [
+    gradient(vars),
+    ...vars.map((v) => partial(v, true)),
+    hessian(vars),
+    ...vars.map((v) => integrateBy(v, true)),
+    ...vars.map(solveFor),
+    ...rest,
+  ];
 }
 
-export function searchActions(kind: ObjKind, q: string, limit = 7): Action[] {
-  const all = actionsFor(kind);
+export function searchActions(o: Obj, q: string, limit = 7): Action[] {
+  const all = actionsFor(o);
   const s = q.trim().toLowerCase();
   if (!s) return all.slice(0, limit);
   const score = (a: Action) => {

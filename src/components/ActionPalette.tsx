@@ -26,7 +26,7 @@ export function ActionPalette() {
   const input = useRef<HTMLInputElement>(null);
 
   const obj = selection.length === 1 ? objs.find((o) => o.id === selection[0]) : undefined;
-  const hits = useMemo(() => (obj ? searchActions(obj.kind, q) : []), [obj, q]);
+  const hits = useMemo(() => (obj ? searchActions(obj, q) : []), [obj, q]);
 
   // "/" opens it for the current selection
   useEffect(() => {

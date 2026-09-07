@@ -78,4 +78,6 @@ export const ops = {
   graph: (nodes: string[], edges: [string, string][]) => call("graph", [nodes, edges]),
   factorint: (n: number) => call("factorint", [n]),
   matrix: (cells: string[][], what: string) => call("matrix", [cells, what]),
+  gradient: (a: string, vars: string[]) => call("gradient", [a, vars]),
+  hessian: (a: string, vars: string[]) => call("hessian", [a, vars]),
 };

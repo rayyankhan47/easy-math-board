@@ -40,7 +40,7 @@ export const DEFAULTS: Settings = {
   inkSize: 4,
 };
 
-const KEY = "margin.settings";
+const KEY = "emb.settings";
 
 interface SettingsState extends Settings {
   tool: Tool;

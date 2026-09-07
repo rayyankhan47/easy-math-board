@@ -71,7 +71,7 @@ export function join(room: string, seed: Obj[], onRemote: (objs: Obj[]) => void)
   doc = new Y.Doc();
   objects = doc.getMap<Obj>("objects");
 
-  provider = new WebrtcProvider(`margin:${room}`, doc, {
+  provider = new WebrtcProvider(`easy-math-board:${room}`, doc, {
     ...(SIGNALING.length ? { signaling: SIGNALING } : {}),
   });
 

@@ -82,7 +82,8 @@ export function Help() {
             <li>double-click any line to edit it</li>
             <li>
               select something and press <span className="font-mono">/</span> — the menu changes to
-              match what you picked: derivative, integral, plot it, adjacency matrix, determinant…
+              match what you picked. A two-variable function offers ∂/∂x, ∂/∂y, gradient and
+              Hessian; a graph offers its adjacency matrix
             </li>
             <li>select a line → simplify, factor, solve, differentiate, integrate</li>
             <li>
