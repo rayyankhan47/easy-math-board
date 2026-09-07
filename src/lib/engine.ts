@@ -77,4 +77,5 @@ export const ops = {
   evaluate: (a: string, binds: Record<string, string>) => call("evaluate", [a, binds]),
   graph: (nodes: string[], edges: [string, string][]) => call("graph", [nodes, edges]),
   factorint: (n: number) => call("factorint", [n]),
+  matrix: (cells: string[][], what: string) => call("matrix", [cells, what]),
 };

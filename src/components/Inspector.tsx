@@ -180,7 +180,16 @@ function MatrixPanel({ o, update }: { o: MatrixObj; update: ReturnType<typeof us
   return (
     <>
       <Head t={o.label || "matrix"} />
-      <Row k="size" v={`${rows} × ${cols}`} />
+      <Row
+        k="size"
+        v={
+          <span className="flex items-center gap-1">
+            <Num value={rows} onChange={(v) => resize(v, cols)} />
+            <span className="text-[var(--text-faint)]">×</span>
+            <Num value={cols} onChange={(v) => resize(rows, v)} />
+          </span>
+        }
+      />
       {m ? (
         <>
           <Row k="rank" v={rank(m)} />
@@ -611,5 +620,27 @@ function InkPanel({ o, update }: { o: InkObj; update: Update }) {
         strokes are kept exactly as drawn
       </p>
     </>
+  );
+}
+
+
+/** A number you can type into or nudge with the arrow keys. */
+function Num({
+  value, onChange, min = 1, max = 12,
+}: { value: number; onChange: (v: number) => void; min?: number; max?: number }) {
+  return (
+    <input
+      type="number"
+      min={min}
+      max={max}
+      value={value}
+      onChange={(e) => {
+        const v = parseInt(e.target.value, 10);
+        if (!Number.isNaN(v)) onChange(Math.max(min, Math.min(max, v)));
+      }}
+      onKeyDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      className="w-9 rounded-[3px] border border-[var(--border)] bg-[var(--inset)] px-1 py-0.5 text-center font-mono text-[12px] text-[var(--text)] outline-none focus:border-[var(--accent)]"
+    />
   );
 }

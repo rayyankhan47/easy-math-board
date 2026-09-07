@@ -27,6 +27,25 @@ Press `?` for everything it knows — that list is generated from the command
 registry, so it is never out of date. Suggestions appear as you type, so
 nothing has to be memorised first.
 
+## Slash on anything
+
+Select an object and press `/`. The menu is built from what you selected.
+
+Write `sin(x)/x`, hit `/`, type `deriv` — the derivative lands underneath. The
+original is never touched; results arrive as new objects.
+
+| selected | some of what `/` offers |
+|---|---|
+| maths | derivative · integral · simplify · factor · solve · **plot it** · **as a 3d surface** |
+| graph | **adjacency matrix** · degree sequence · complement · make it complete · relayout |
+| matrix | determinant · rank · trace · eigenvalues · characteristic polynomial · inverse · row reduce |
+| plane | **add the derivative** as another curve · add a curve · recentre |
+| numbers | highlight primes, squares, Fibonacci… · extend |
+
+The cross-object ones are the fun part: a graph can become a matrix, a line of
+maths can become a plane or a 3D surface. Matrix operations run through SymPy,
+so symbolic entries work — a matrix of `a`, `b`, `c` has a real determinant.
+
 ## The part that matters
 
 Select a line and you can simplify, expand, factor, solve, differentiate or

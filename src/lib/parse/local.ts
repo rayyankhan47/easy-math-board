@@ -25,10 +25,31 @@ export function latexify(s: string): string {
   for (const f of FUNCS) t = t.replace(new RegExp(`\\b${f}\\b`, "g"), `\\${f} `);
   for (const g of GREEK) t = t.replace(new RegExp(`\\b${g}\\b`, "g"), `\\${g} `);
   t = t.replace(/\*/g, " \\cdot ");
-  // simple single-token fractions: a/b, (a+b)/c
-  t = t.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, "\\frac{$1}{$2}");
-  t = t.replace(/\(([^()]+)\)\s*\/\s*([A-Za-z0-9]+)/g, "\\frac{$1}{$2}");
-  t = t.replace(/(?<![\\\w}])([A-Za-z0-9]+)\s*\/\s*([A-Za-z0-9]+)/g, "\\frac{$1}{$2}");
+  // command over command: tan(x)/sin(x)
+  t = t.replace(
+    /(\\[a-zA-Z]+)\s*\(([^()]*)\)\s*\/\s*(\\[a-zA-Z]+)\s*\(([^()]*)\)/g,
+    "\\frac{$1($2)}{$3($4)}",
+  );
+  // braced commands: sqrt(2)/2 has already become \sqrt{2}
+  t = t.replace(
+    /(\\[a-zA-Z]+\{[^{}]*\})\s*\/\s*([A-Za-z0-9^_]+|\([^()]+\))/g,
+    (_m, a, b) => `\\frac{${a}}{${String(b).replace(/^\(|\)$/g, "")}}`,
+  );
+  // A function call is part of the numerator, not a bracket to be split:
+  // sin(x)/x is (sin x)/x, never sin(x/x).
+  t = t.replace(
+    /(\\[a-zA-Z]+)\s*\(([^()]*)\)\s*\/\s*\(([^()]+)\)/g,
+    "\\frac{$1($2)}{$3}",
+  );
+  t = t.replace(
+    /(\\[a-zA-Z]+)\s*\(([^()]*)\)\s*\/\s*([A-Za-z0-9^_]+)/g,
+    "\\frac{$1($2)}{$3}",
+  );
+  // simple fractions: (a+b)/(c), (a+b)/c, a/b — but never straight after a
+  // command, which would steal that command's argument.
+  t = t.replace(/(?<!\\[a-zA-Z]{1,12}\s?)\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, "\\frac{$1}{$2}");
+  t = t.replace(/(?<!\\[a-zA-Z]{1,12}\s?)\(([^()]+)\)\s*\/\s*([A-Za-z0-9]+)/g, "\\frac{$1}{$2}");
+  t = t.replace(/(?<![\\\w})])([A-Za-z0-9]+)\s*\/\s*([A-Za-z0-9]+)/g, "\\frac{$1}{$2}");
   return t.replace(/\s+/g, " ").trim();
 }
 

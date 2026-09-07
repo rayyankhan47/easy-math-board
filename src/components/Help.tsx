@@ -77,6 +77,10 @@ export function Help() {
           <ul className="space-y-1 text-[11px] text-[var(--text-dim)]">
             <li>click empty space → type · ↑↓ pick a suggestion · tab to fill</li>
             <li>double-click any line to edit it</li>
+            <li>
+              select something and press <span className="font-mono">/</span> — the menu changes to
+              match what you picked: derivative, integral, plot it, adjacency matrix, determinant…
+            </li>
             <li>select a line → simplify, factor, solve, differentiate, integrate</li>
             <li>
               <span className="text-[var(--accent-soft)]">shift-click two equations</span> → substitute or

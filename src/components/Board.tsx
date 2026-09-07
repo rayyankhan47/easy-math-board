@@ -20,6 +20,7 @@ import { SurfaceObject } from "./objects/SurfaceObject";
 import { ImageObject } from "./objects/ImageObject";
 import { InkObject } from "./objects/InkObject";
 import { InkPalette } from "./InkPalette";
+import { ActionPalette } from "./ActionPalette";
 import { strokeHit, strokePath } from "@/lib/ink";
 import { SettingsButton } from "./Settings";
 import { Minimap } from "./Minimap";
@@ -310,20 +311,20 @@ export function Board() {
             }}
           >
             {o.kind !== "ink" && (
-            <button
-              title="drag to move"
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                select(o.id, e.shiftKey);
-                const w = toWorld(e.clientX, e.clientY);
-                dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
-              }}
-              className={`absolute -top-1 left-1/2 z-10 -translate-x-1/2 cursor-grab rounded-[3px] px-2 leading-none text-[var(--text-ghost)] transition-opacity hover:text-[var(--text-dim)] active:cursor-grabbing ${
-                selection.includes(o.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              }`}
-            >
-              <span className="text-[9px] tracking-[0.2em]">⋯</span>
-            </button>
+              <button
+                title="drag to move"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  select(o.id, e.shiftKey);
+                  const w = toWorld(e.clientX, e.clientY);
+                  dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
+                }}
+                className={`absolute -top-[13px] left-0 flex h-[13px] w-full cursor-grab items-center justify-center rounded-t-[5px] border border-b-0 border-[var(--border)] bg-[var(--panel)] text-[var(--text-faint)] transition-opacity hover:text-[var(--text-dim)] active:cursor-grabbing ${
+                  selection.includes(o.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                }`}
+              >
+                <span className="text-[8px] leading-none tracking-[0.25em]">⠿</span>
+              </button>
             )}
             {render(o)}
             {selection.length === 1 && selection[0] === o.id && "w" in o && "h" in o && (
@@ -351,6 +352,7 @@ export function Board() {
         )}
 
         {caret && <CommandInput at={caret} onDone={() => setCaret(null)} />}
+        {!caret && <ActionPalette />}
         <Cursors />
       </div>
 

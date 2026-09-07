@@ -123,6 +123,36 @@ def op_graph(nodes, edges):
             else max((len(c) for c in nx.find_cliques(G)), default=0)
     return out
 
+def op_matrix(cells, what):
+    M = Matrix([[_p(str(c) if str(c).strip() else "0") for c in row] for row in cells])
+    if what == "det":
+        if M.rows != M.cols: return _err("determinant needs a square matrix")
+        return _out(simplify(M.det()))
+    if what == "rank":  return _out(M.rank())
+    if what == "trace":
+        if M.rows != M.cols: return _err("trace needs a square matrix")
+        return _out(simplify(M.trace()))
+    if what == "transpose": return {"cells": [[str(x) for x in r] for r in M.T.tolist()]}
+    if what == "rref":     return {"cells": [[str(x) for x in r] for r in M.rref()[0].tolist()]}
+    if what == "inverse":
+        if M.rows != M.cols: return _err("inverse needs a square matrix")
+        if simplify(M.det()) == 0: return _err("matrix is singular")
+        return {"cells": [[str(simplify(x)) for x in r] for r in M.inv().tolist()]}
+    if what == "eigenvalues":
+        if M.rows != M.cols: return _err("eigenvalues need a square matrix")
+        vals = M.eigenvals()
+        parts = []
+        for v, mult in vals.items():
+            v = simplify(v)
+            parts.append(latex(v) + (r"\ (\times " + str(mult) + ")" if mult > 1 else ""))
+        return {"text": ", ".join(str(simplify(v)) for v in vals),
+                "latex": ",\\ ".join(parts)}
+    if what == "charpoly":
+        if M.rows != M.cols: return _err("characteristic polynomial needs a square matrix")
+        lam = Symbol("lambda")
+        return _out(Eq(lam**0 * 0 + M.charpoly(lam).as_expr(), 0))
+    return _err("unknown matrix operation: " + str(what))
+
 def op_factorint(n):
     f = factorint(int(n))
     return {"factors": {str(k): int(v) for k, v in f.items()},
