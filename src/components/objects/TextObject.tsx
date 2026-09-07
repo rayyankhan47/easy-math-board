@@ -5,6 +5,8 @@ import { Tex } from "../Tex";
 import { useBoard } from "@/lib/store";
 import { parse } from "@/lib/commands";
 import { DEFAULT_STYLE, type TextObj } from "@/lib/types";
+import { atEnd, useMathGhost } from "@/lib/mathGhost";
+import { Ghost } from "../Ghost";
 
 export const FONT_STACK = {
   sans: "ui-sans-serif, -apple-system, 'Segoe UI', Inter, sans-serif",
@@ -18,6 +20,7 @@ export function TextObject({ o }: { o: TextObj }) {
   const update = useBoard((s) => s.update);
   const remove = useBoard((s) => s.remove);
   const ref = useRef<HTMLInputElement>(null);
+  const ghost = useMathGhost(draft);
   const st = o.style ?? DEFAULT_STYLE;
 
   useEffect(() => {
@@ -47,20 +50,28 @@ export function TextObject({ o }: { o: TextObj }) {
 
   if (editing)
     return (
-      <input
-        ref={ref}
-        value={draft}
-        autoFocus
-        style={{ ...css, width: `${Math.max(8, draft.length + 1)}ch` }}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          e.stopPropagation();
-          if (e.key === "Enter") commit();
-          if (e.key === "Escape") { setDraft(o.raw); setEditing(false); }
-        }}
-        className="min-w-[8ch] bg-transparent text-[var(--text)] outline-none"
-      />
+      <span className="relative inline-block">
+        <input
+          ref={ref}
+          value={draft}
+          autoFocus
+          style={{ ...css, width: `${Math.max(8, draft.length + (ghost?.length ?? 0) + 3)}ch` }}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "ArrowRight" && ghost && atEnd(ref.current)) {
+              e.preventDefault();
+              setDraft(draft + (draft.endsWith(" ") ? "" : " ") + ghost);
+              return;
+            }
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") { setDraft(o.raw); setEditing(false); }
+          }}
+          className="min-w-[8ch] bg-transparent text-[var(--text)] outline-none"
+        />
+        <Ghost value={draft} ghost={ghost} style={css} />
+      </span>
     );
 
   return (

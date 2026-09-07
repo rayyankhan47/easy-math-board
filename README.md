@@ -28,6 +28,18 @@ Press `?` for everything it knows — that list is generated from the command
 registry, so it is never out of date. Suggestions appear as you type, so
 nothing has to be memorised first.
 
+## Small comforts
+
+Type `1 + 2 =` and the answer appears ahead of the caret in blue. `→` accepts
+it; carry on typing and it goes away. Works while editing an existing line too.
+
+`ctrl/⌘ Z` undoes everything — objects, edits, drags, strokes — and `⇧⌘Z` redoes.
+A whole drag is one step, not two hundred.
+
+Ink behaves like ink: no frame, no padding box. A dashed outline marks it when
+selected, and only the stroke itself is clickable, so scribbling across a plane
+never stops you using the plane underneath.
+
 ## Shapes that carry their maths
 
 A regular n-gon reports its side, apothem, perimeter, area, interior and
@@ -55,6 +67,10 @@ original is never touched; results arrive as new objects.
 | plane | **add the derivative** as another curve · add a curve · recentre |
 | numbers | highlight primes, squares, Fibonacci… · extend |
 | shape | write out its numbers · **as a cycle graph** · add/remove a side · diagonals · circumcircle |
+
+Calculus follows the variable you actually used: `f(t) = t^3 + 3t` differentiates
+to `3t² + 3`, not with respect to `f`. Names being defined, and anything written
+as `name(...)`, are not treated as unknowns.
 
 The cross-object ones are the fun part: a graph can become a matrix, a line of
 maths can become a plane or a 3D surface. Matrix operations run through SymPy,

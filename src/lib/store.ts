@@ -15,8 +15,13 @@ let KEY = LOCAL_KEY;
 export const setPersistKey = (room: string | null) =>
   (KEY = room ? `board.room.${room}` : LOCAL_KEY);
 
+/** How many steps back you can go. Snapshots are small; objects are few. */
+const HISTORY = 120;
+
 interface Board {
   objs: Obj[];
+  past: Obj[][];
+  future: Obj[][];
   selection: string[];
   pan: { x: number; y: number };
   zoom: number;
@@ -29,6 +34,10 @@ interface Board {
   setView: (pan: { x: number; y: number }, zoom: number) => void;
   hydrate: () => Promise<void>;
   clear: () => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
   /** Replace everything, e.g. when a room hands us its contents. */
   replaceAll: (objs: Obj[]) => void;
 }
@@ -125,8 +134,26 @@ const persist = (objs: Obj[]) => {
   if (!isApplyingRemote()) publish(objs);
 };
 
+/**
+ * Consecutive changes of the same kind inside one gesture collapse into a
+ * single undo step — dragging an object is one undo, not two hundred.
+ */
+let lastTag = "";
+let lastAt = 0;
+
+function record(state: Board, tag: string): Partial<Board> {
+  const now = Date.now();
+  const merge = tag !== "" && tag === lastTag && now - lastAt < 700;
+  lastTag = tag;
+  lastAt = now;
+  if (merge) return {};
+  return { past: [...state.past, state.objs].slice(-HISTORY), future: [] };
+}
+
 export const useBoard = create<Board>((set, get) => ({
   objs: [],
+  past: [],
+  future: [],
   selection: [],
   pan: { x: 0, y: 0 },
   zoom: 1,
@@ -136,7 +163,7 @@ export const useBoard = create<Board>((set, get) => ({
     set((s) => {
       const objs = [...s.objs, obj];
       persist(objs);
-      return { objs, selection: [obj.id] };
+      return { ...record(s, `add:${obj.id}`), objs, selection: [obj.id] };
     });
   },
 
@@ -144,14 +171,14 @@ export const useBoard = create<Board>((set, get) => ({
     set((s) => {
       const objs = s.objs.map((o) => (o.id === id ? ({ ...o, ...patch } as Obj) : o));
       persist(objs);
-      return { objs };
+      return { ...record(s, `update:${id}:${Object.keys(patch).join(",")}`), objs };
     }),
 
   remove: (id) =>
     set((s) => {
       const objs = s.objs.filter((o) => o.id !== id);
       persist(objs);
-      return { objs, selection: s.selection.filter((x) => x !== id) };
+      return { ...record(s, ""), objs, selection: s.selection.filter((x) => x !== id) };
     }),
 
   select: (id, additive = false) =>
@@ -169,7 +196,7 @@ export const useBoard = create<Board>((set, get) => ({
     set((s) => {
       const objs = s.objs.map((o) => (o.id === id ? { ...o, x, y } : o));
       persist(objs);
-      return { objs };
+      return { ...record(s, `move:${id}`), objs };
     }),
 
   setView: (pan, zoom) => set({ pan, zoom }),
@@ -179,12 +206,45 @@ export const useBoard = create<Board>((set, get) => ({
     if (saved?.length) set({ objs: saved });
   },
 
-  clear: () => {
-    void idbSet(KEY, []);
-    set({ objs: [], selection: [] });
-  },
+  clear: () =>
+    set((s) => {
+      void idbSet(KEY, []);
+      return { ...record(s, ""), objs: [], selection: [] };
+    }),
+
+  undo: () =>
+    set((s) => {
+      if (!s.past.length) return {};
+      const objs = s.past[s.past.length - 1];
+      lastTag = "";
+      persist(objs);
+      return {
+        objs,
+        past: s.past.slice(0, -1),
+        future: [s.objs, ...s.future].slice(0, HISTORY),
+        selection: s.selection.filter((id) => objs.some((o) => o.id === id)),
+      };
+    }),
+
+  redo: () =>
+    set((s) => {
+      if (!s.future.length) return {};
+      const objs = s.future[0];
+      lastTag = "";
+      persist(objs);
+      return {
+        objs,
+        past: [...s.past, s.objs].slice(-HISTORY),
+        future: s.future.slice(1),
+        selection: s.selection.filter((id) => objs.some((o) => o.id === id)),
+      };
+    }),
+
+  canUndo: () => get().past.length > 0,
+  canRedo: () => get().future.length > 0,
 
   replaceAll: (objs) => {
+    // Remote changes are not part of your own undo history.
     void idbSet(KEY, objs);
     set((s) => ({ objs, selection: s.selection.filter((id) => objs.some((o) => o.id === id)) }));
   },

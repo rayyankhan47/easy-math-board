@@ -32,9 +32,11 @@ export function InkObject({ o }: { o: InkObj }) {
         opacity: highlight ? 0.42 : 1,
         mixBlendMode: highlight ? "multiply" : "normal",
       }}
+      /* The box is transparent to clicks; only the stroke itself is not, so a
+         scribble over a plane never blocks the plane underneath. */
       className="pointer-events-none overflow-visible"
     >
-      <path d={d} fill={o.color} />
+      <path d={d} fill={o.color} className="pointer-events-auto cursor-grab" />
       {head && (
         <path
           d={head}
@@ -43,6 +45,7 @@ export function InkObject({ o }: { o: InkObj }) {
           strokeWidth={Math.max(1.6, o.size * 0.72)}
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="pointer-events-auto cursor-grab"
         />
       )}
     </svg>

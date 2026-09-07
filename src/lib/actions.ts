@@ -1,7 +1,7 @@
 "use client";
 
 import { ops } from "./engine";
-import { rhs } from "./axes";
+import { isDefinition, pickVar, rhs } from "./axes";
 import { complete, pairsToEdges, circleNodes, cycle, degrees, chromatic } from "./graphs";
 import { shapeFacts, tidy as sTidy } from "./shapes";
 import type { GraphObj, MatrixObj, Obj, ObjKind, PlaneObj, ShapeObj, Spec, StripObj, SurfaceObj, ClockObj } from "./types";
@@ -26,11 +26,10 @@ export interface Action {
   run: (o: Obj, c: ActionCtx) => void | Promise<void>;
 }
 
-/** Prefer x, then any single letter, so "derivative" rarely has to ask. */
+/** The variable this expression is really about. */
 async function mainVar(expr: string): Promise<string> {
-  const r = await ops.vars(expr);
-  const vars = (r.vars as string[]) ?? [];
-  return vars.includes("x") ? "x" : (vars[0] ?? "x");
+  const r = await ops.vars(rhs(expr));
+  return pickVar(expr, (r.vars as string[]) ?? []);
 }
 
 const asText = (c: ActionCtx, text: string, latex: string | null) =>
@@ -55,7 +54,7 @@ export const ACTIONS: Action[] = [
     aliases: ["differentiate", "d/dx", "diff", "slope"],
     run: async (o, c) => {
       const src = (o as { raw: string }).raw;
-      await sym(c, ops.diff(src, await mainVar(src)));
+      await sym(c, ops.diff(rhs(src), await mainVar(src)));
     },
   },
   {
@@ -63,28 +62,29 @@ export const ACTIONS: Action[] = [
     aliases: ["integrate", "antiderivative", "∫"],
     run: async (o, c) => {
       const src = (o as { raw: string }).raw;
-      await sym(c, ops.integrate(src, await mainVar(src)));
+      await sym(c, ops.integrate(rhs(src), await mainVar(src)));
     },
   },
   {
     id: "simplify", label: "simplify", hint: "reduce it", kinds: MATH,
-    run: (o, c) => sym(c, ops.simplify((o as { raw: string }).raw)),
+    run: (o, c) => sym(c, ops.simplify(rhs((o as { raw: string }).raw))),
   },
   {
     id: "expand", label: "expand", hint: "multiply it out", kinds: MATH,
-    run: (o, c) => sym(c, ops.expand((o as { raw: string }).raw)),
+    run: (o, c) => sym(c, ops.expand(rhs((o as { raw: string }).raw))),
   },
   {
     id: "factor", label: "factor", hint: "into factors", kinds: MATH,
     aliases: ["factorise", "factorize"],
-    run: (o, c) => sym(c, ops.factor((o as { raw: string }).raw)),
+    run: (o, c) => sym(c, ops.factor(rhs((o as { raw: string }).raw))),
   },
   {
     id: "solve", label: "solve", hint: "for the main variable", kinds: MATH,
     aliases: ["roots", "zeros", "zeroes"],
     run: async (o, c) => {
       const src = (o as { raw: string }).raw;
-      await sym(c, ops.solve(src, await mainVar(src)));
+      // Solving "f(x) = x^2 - 4" means finding its roots, not solving for f.
+      await sym(c, ops.solve(isDefinition(src) ? rhs(src) : src, await mainVar(src)));
     },
   },
   {

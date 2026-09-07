@@ -36,7 +36,8 @@ import { publishCursor } from "@/lib/collab";
 import type { Obj } from "@/lib/types";
 
 export function Board() {
-  const { objs, pan, zoom, selection, select, move, remove, setView, hydrate } = useBoard();
+  const { objs, pan, zoom, selection, select, move, remove, setView, hydrate, undo, redo } =
+    useBoard();
   const [caret, setCaret] = useState<{ x: number; y: number } | null>(null);
   const surface = useRef<HTMLDivElement>(null);
   const panning = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
@@ -94,6 +95,22 @@ export function Board() {
   // delete / escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const typing = ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);
+
+      // Undo works everywhere, including while a field has focus.
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (typing) return;
+
       if (e.key === "Escape") {
         setCaret(null);
         select(null);
@@ -119,7 +136,7 @@ export function Board() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onUp);
     };
-  }, [selection, caret, remove, select, settings.confirmDelete]);
+  }, [selection, caret, remove, select, settings.confirmDelete, undo, redo]);
 
   function onSurfaceDown(e: React.PointerEvent) {
     // Chrome (toolbar, panels, minimap) stops propagation itself; anything that
@@ -301,12 +318,18 @@ export function Board() {
         {objs.map((o) => (
           <div
             key={o.id}
-            className={`group absolute w-max rounded-[9px] transition-colors ${
-              o.kind === "ink" ? "" : "cursor-grab p-[14px] active:cursor-grabbing"
-            } ${
-              selection.includes(o.id)
-                ? "bg-[var(--grab-strong)] ring-2 ring-[var(--accent)]"
-                : "hover:bg-[var(--grab)]"
+            className={`group absolute w-max transition-colors ${
+              o.kind === "ink"
+                ? // Ink gets no frame — just a dotted outline when picked, so a
+                  // scribble stays a scribble.
+                  selection.includes(o.id)
+                  ? "rounded-[3px] outline-2 outline-dashed outline-offset-[3px] outline-[var(--accent)]"
+                  : ""
+                : `cursor-grab rounded-[9px] p-[14px] active:cursor-grabbing ${
+                    selection.includes(o.id)
+                      ? "bg-[var(--grab-strong)] ring-2 ring-[var(--accent)]"
+                      : "hover:bg-[var(--grab)]"
+                  }`
             }`}
             style={{ left: o.x, top: o.y }}
             onPointerDown={(e) => {

@@ -95,6 +95,15 @@ export function Help() {
             <li>scroll to pan · ⌘-scroll to zoom · backspace to delete</li>
             <li>drag an object by the soft frame around it</li>
             <li>clicking away commits what you typed — escape discards it</li>
+            <li>
+              type <span className="font-mono">1 + 2 =</span> and the answer appears ahead of the
+              caret — <span className="font-mono">→</span> accepts it, anything else ignores it
+            </li>
+            <li>
+              <span className="font-mono">ctrl/⌘ Z</span> undoes anything ·{" "}
+              <span className="font-mono">⇧</span> to redo
+            </li>
+            <li>ink is picked out with a dashed outline; only the stroke itself is clickable</li>
             <li>the left toolbar spawns anything — hover an icon for what it is</li>
             <li>
               <span className="font-mono">V</span> select ·{" "}

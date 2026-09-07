@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { describe, parse, suggest } from "@/lib/commands";
 import { useBoard } from "@/lib/store";
+import { atEnd, useMathGhost } from "@/lib/mathGhost";
+import { Ghost } from "./Ghost";
 
 /**
  * The one input. Type anything; the right object appears. Suggestions make the
@@ -25,7 +27,9 @@ export function CommandInput({
   const latest = useRef("");
   latest.current = v;
 
-  const hits = useMemo(() => suggest(v), [v]);
+  const field = useRef<HTMLInputElement>(null);
+  const ghost = useMathGhost(v);
+  const hits = useMemo(() => (ghost ? [] : suggest(v)), [v, ghost]);
   const preview = useMemo(() => (v.trim() ? describe(parse(v)) : ""), [v]);
 
   const write = (text: string) => {
@@ -54,6 +58,12 @@ export function CommandInput({
 
   function onKeyDown(e: React.KeyboardEvent) {
     e.stopPropagation();
+    // right arrow at the end takes the suggestion, as everywhere else
+    if (e.key === "ArrowRight" && ghost && atEnd(field.current)) {
+      e.preventDefault();
+      setV(v + (v.endsWith(" ") ? "" : " ") + ghost);
+      return;
+    }
     if (e.key === "Enter") {
       e.preventDefault();
       commit(sel >= 0 && hits[sel] ? hits[sel].label : v);
@@ -79,7 +89,9 @@ export function CommandInput({
       style={{ left: at.x, top: at.y }}
       onPointerDown={(e) => e.stopPropagation()}
     >
+      <div className="relative">
       <input
+        ref={field}
         autoFocus
         value={v}
         placeholder="type anything"
@@ -91,6 +103,8 @@ export function CommandInput({
         onBlur={() => setTimeout(onDone, 120)}
         className="w-[40ch] border-b border-[var(--text-ghost)] bg-transparent pb-1 font-mono text-[15px] text-[var(--text)] placeholder:text-[var(--text-faint)] outline-none focus:border-[var(--accent)]"
       />
+      <Ghost value={v} ghost={ghost} className="pb-1 font-mono text-[15px] leading-normal" />
+      </div>
 
       {preview && (
         <div className="mt-1 font-mono text-[10px] text-[var(--text-faint)]">→ {preview}</div>

@@ -15,13 +15,44 @@ export function tickLabel(v: number, step: number): string {
   return v.toFixed(Math.min(6, decimals));
 }
 
-/** Expressions arrive as "y = x^2" or "f(x) = sin x" — plot the right-hand side. */
-export function rhs(expr: string): string {
+/** True for "y = …", "f(x) = …", "g(t) = …" — a definition, not a constraint. */
+export function isDefinition(expr: string): boolean {
   const i = expr.indexOf("=");
-  if (i < 0) return expr.trim();
+  if (i < 0 || expr[i + 1] === "=") return false;
   const left = expr.slice(0, i).trim();
-  if (/^(y|f\s*\(\s*x\s*\)|z|g\s*\(\s*x\s*\))$/i.test(left)) return expr.slice(i + 1).trim();
-  return expr.trim();
+  return /^[A-Za-z]\w*\s*(\(\s*[A-Za-z]\w*\s*\))?$/.test(left);
+}
+
+/** The part worth operating on: the body of a definition, else the whole thing. */
+export function rhs(expr: string): string {
+  if (!isDefinition(expr)) return expr.trim();
+  return expr.slice(expr.indexOf("=") + 1).trim();
+}
+
+/** Conventional order — the variable a mathematician would assume you meant. */
+const PREFERENCE = [
+  "x", "t", "y", "z", "u", "v", "w", "s", "r", "n", "k", "m", "p", "q",
+  "theta", "phi", "alpha", "beta",
+];
+
+/**
+ * Which variable to differentiate or integrate with respect to.
+ * "f(t) = t^2" is about t, not f — the name being defined is not a variable,
+ * and neither is anything used as a function.
+ */
+export function pickVar(raw: string, vars: string[]): string {
+  const def = raw.match(/^\s*([A-Za-z]\w*)\s*\(\s*([A-Za-z]\w*)\s*\)\s*=/);
+  if (def) return def[2];
+
+  // anything written as name(...) is a function here, not an unknown
+  const called = new Set([...raw.matchAll(/([A-Za-z]\w*)\s*\(/g)].map((m) => m[1]));
+  // the name on the left of a definition is being defined, not solved for
+  if (isDefinition(raw)) called.add(raw.slice(0, raw.indexOf("=")).trim());
+
+  const pool = vars.filter((v) => !called.has(v));
+  const use = pool.length ? pool : vars;
+  for (const p of PREFERENCE) if (use.includes(p)) return p;
+  return use[0] ?? "x";
 }
 
 
