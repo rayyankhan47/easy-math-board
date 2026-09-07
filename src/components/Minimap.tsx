@@ -2,7 +2,7 @@
 
 import { vh, vw } from "@/lib/viewport";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useBoard } from "@/lib/store";
 import { objSize } from "@/lib/bounds";
 
@@ -19,6 +19,10 @@ export function Minimap() {
   const setView = useBoard((s) => s.setView);
   const box = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  // The viewport rectangle depends on the window size, which the server cannot
+  // know — render nothing until we are on the client.
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
 
   const view = useMemo(
     () => ({ x: -pan.x / zoom, y: -pan.y / zoom, w: vw() / zoom, h: vh() / zoom }),
@@ -56,6 +60,8 @@ export function Minimap() {
     const p = toBoard(cx, cy);
     setView({ x: vw() / 2 - p.x * zoom, y: vh() / 2 - p.y * zoom }, zoom);
   };
+
+  if (!ready) return null;
 
   return (
     <div

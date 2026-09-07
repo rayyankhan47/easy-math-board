@@ -90,7 +90,8 @@ export function Help() {
             <li>planes and surfaces: drag inside to pan or orbit, scroll to zoom</li>
             <li>paste or drop an image anywhere on the board</li>
             <li>scroll to pan · ⌘-scroll to zoom · backspace to delete</li>
-            <li>drag an object by the ⋯ grip above it</li>
+            <li>drag an object by the soft frame around it</li>
+            <li>clicking away commits what you typed — escape discards it</li>
             <li>the left toolbar spawns anything — hover an icon for what it is</li>
             <li>
               <span className="font-mono">V</span> select ·{" "}

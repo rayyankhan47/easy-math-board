@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { compile } from "mathjs";
 import { useBoard } from "@/lib/store";
 import { useTheme, token } from "@/lib/theme";
+import { niceStep, tickLabel } from "@/lib/axes";
 import type { SurfaceObj } from "@/lib/types";
 
 /* A painter's-algorithm surface renderer. No WebGL: at these grid sizes a
@@ -99,6 +100,85 @@ export function SurfaceObject({ o }: { o: SurfaceObj }) {
 
     const dark = getComputedStyle(document.documentElement)
       .getPropertyValue("--bg").trim().startsWith("#1");
+
+    // ---- axes, drawn behind the surface so it can occlude them ----
+    const axis = token("--text-faint");
+    const label = token("--text-dim2");
+    g.font = "9px ui-monospace, SFMono-Regular, Menlo, monospace";
+
+    const zTop = (zHi - (zLo + zHi) / 2) * zScale;
+    const zBot = (zLo - (zLo + zHi) / 2) * zScale;
+    const R = o.range;
+
+    /** Project a raw (x, y, z-in-projection-units) triple. */
+    const raw = (x: number, y: number, z: number) => {
+      const x1 = x * cy - y * sy;
+      const y1 = x * sy + y * cy;
+      const y2 = y1 * cp - z * sp;
+      return { sx: o.w / 2 + x1 * s, sy: o.h / 2 - y2 * s, depth: y1 * sp + z * cp };
+    };
+
+    const line = (a: { sx: number; sy: number }, b: { sx: number; sy: number }, w = 1) => {
+      g.strokeStyle = axis;
+      g.lineWidth = w;
+      g.beginPath();
+      g.moveTo(a.sx, a.sy);
+      g.lineTo(b.sx, b.sy);
+      g.stroke();
+    };
+
+    // Anchor the axes at whichever floor corner is furthest away, so the
+    // surface never sits on top of them.
+    const corners: [number, number][] = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+    let ax_ = -1, ay_ = -1, best = -Infinity;
+    for (const [i, j] of corners) {
+      const d = raw(i * R, j * R, zBot).depth;
+      if (d > best) { best = d; ax_ = i; ay_ = j; }
+    }
+
+    const step = niceStep(s, 54);
+    g.fillStyle = label;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+
+    const origin = raw(ax_ * R, ay_ * R, zBot);
+    // x runs along the far edge, y along the other, z stands up from the corner
+    line(origin, raw(-ax_ * R, ay_ * R, zBot), 1.1);
+    line(origin, raw(ax_ * R, -ay_ * R, zBot), 1.1);
+    line(origin, raw(ax_ * R, ay_ * R, zTop), 1.1);
+
+    // small offset outward, so labels sit clear of the box
+    const out = (p: { sx: number; sy: number }, k = 1) => {
+      const dx = p.sx - o.w / 2;
+      const dy = p.sy - o.h / 2;
+      const m = Math.hypot(dx, dy) || 1;
+      return { sx: p.sx + (dx / m) * 11 * k, sy: p.sy + (dy / m) * 11 * k };
+    };
+
+    for (let v = Math.ceil(-R / step) * step; v <= R + 1e-9; v += step) {
+      if (Math.abs(v) < step / 1000) continue;
+      const px = out(raw(v, ay_ * R, zBot));
+      const py = out(raw(ax_ * R, v, zBot));
+      g.fillText(tickLabel(v, step), px.sx, px.sy);
+      g.fillText(tickLabel(v, step), py.sx, py.sy);
+    }
+
+    const zStep = niceStep(Math.abs(s * zScale) || 1, 46);
+    for (let v = Math.ceil(zLo / zStep) * zStep; v <= zHi + 1e-9; v += zStep) {
+      const p = out(raw(ax_ * R, ay_ * R, (v - (zLo + zHi) / 2) * zScale));
+      g.fillText(tickLabel(v, zStep), p.sx, p.sy);
+    }
+
+    g.fillStyle = axis;
+    g.font = "10px ui-monospace, SFMono-Regular, Menlo, monospace";
+    const lx = out(raw(-ax_ * R * 1.1, ay_ * R, zBot), 1.7);
+    const ly = out(raw(ax_ * R, -ay_ * R * 1.1, zBot), 1.7);
+    const lz = out(raw(ax_ * R, ay_ * R, zTop), 1.7);
+    g.fillText("x", lx.sx, lx.sy);
+    g.fillText("y", ly.sx, ly.sy);
+    g.fillText("z", lz.sx, lz.sy);
+    g.font = "9px ui-monospace, SFMono-Regular, Menlo, monospace";
+    g.fillStyle = label;
 
     for (const q of quads) {
       g.beginPath();

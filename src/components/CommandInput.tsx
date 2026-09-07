@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { describe, parse, suggest } from "@/lib/commands";
 import { useBoard } from "@/lib/store";
 
@@ -18,11 +18,14 @@ export function CommandInput({
   const [v, setV] = useState("");
   const [sel, setSel] = useState(-1);
   const add = useBoard((s) => s.add);
+  /** Escape discards; anything else — including clicking away — commits. */
+  const cancelled = useRef(false);
 
   const hits = useMemo(() => suggest(v), [v]);
   const preview = useMemo(() => (v.trim() ? describe(parse(v)) : ""), [v]);
 
   const commit = (text: string) => {
+    if (cancelled.current) return onDone();
     const input = text.trim();
     if (input) add(parse(input), at);
     onDone();
@@ -34,6 +37,7 @@ export function CommandInput({
       e.preventDefault();
       commit(sel >= 0 && hits[sel] ? hits[sel].label : v);
     } else if (e.key === "Escape") {
+      cancelled.current = true;
       onDone();
     } else if (e.key === "ArrowDown" && hits.length) {
       e.preventDefault();
@@ -63,7 +67,7 @@ export function CommandInput({
           setSel(-1);
         }}
         onKeyDown={onKeyDown}
-        onBlur={() => setTimeout(onDone, 120)}
+        onBlur={() => setTimeout(() => commit(v), 120)}
         className="w-[40ch] border-b border-[var(--text-ghost)] bg-transparent pb-1 font-mono text-[15px] text-[var(--text)] placeholder:text-[var(--text-faint)] outline-none focus:border-[var(--accent)]"
       />
 

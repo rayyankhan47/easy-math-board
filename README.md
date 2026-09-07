@@ -75,6 +75,10 @@ Below those are **pen** (`P`), **highlighter** (`M`), **arrow** (`A`) and
 the thing that broke. Strokes are never smoothed, straightened or tidied — the
 mess is the point.
 
+Every object sits in a soft frame — grab that to move it, and the object's own
+interior stays free for panning, orbiting or editing. Clicking away from the
+caret commits what you typed, exactly as Enter would; escape discards.
+
 Selected objects get corner handles; dragging one keeps the proportions, and
 shift stretches freely. A minimap in the corner shows the whole workspace and
 jumps you anywhere in it. The gear holds theme, grid, snapping, interface size,

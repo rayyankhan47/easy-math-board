@@ -295,37 +295,26 @@ export function Board() {
         {objs.map((o) => (
           <div
             key={o.id}
-            className={`group absolute w-max rounded-[5px] ${o.kind === "ink" ? "" : "p-1.5"} ${
+            className={`group absolute w-max rounded-[9px] transition-colors ${
+              o.kind === "ink" ? "" : "cursor-grab p-2.5 active:cursor-grabbing"
+            } ${
               selection.includes(o.id)
-                ? "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--bg)]"
-                : "hover:ring-1 hover:ring-[var(--border-strong)]"
+                ? "bg-[var(--grab-strong)] ring-2 ring-[var(--accent)]"
+                : "hover:bg-[var(--grab)]"
             }`}
             style={{ left: o.x, top: o.y }}
             onPointerDown={(e) => {
               e.stopPropagation();
               select(o.id, e.shiftKey);
               setCaret(null);
-              if (OWNS_INTERIOR.has(o.kind)) return;
+              // Objects that own their interior are moved by grabbing the frame
+              // around them; a press that lands on the wrapper itself is the
+              // frame, anything deeper belongs to the object.
+              if (OWNS_INTERIOR.has(o.kind) && e.target !== e.currentTarget) return;
               const w = toWorld(e.clientX, e.clientY);
               dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
             }}
           >
-            {o.kind !== "ink" && (
-              <button
-                title="drag to move"
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  select(o.id, e.shiftKey);
-                  const w = toWorld(e.clientX, e.clientY);
-                  dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
-                }}
-                className={`absolute -top-[13px] left-0 flex h-[13px] w-full cursor-grab items-center justify-center rounded-t-[5px] border border-b-0 border-[var(--border)] bg-[var(--panel)] text-[var(--text-faint)] transition-opacity hover:text-[var(--text-dim)] active:cursor-grabbing ${
-                  selection.includes(o.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                }`}
-              >
-                <span className="text-[8px] leading-none tracking-[0.25em]">⠿</span>
-              </button>
-            )}
             {render(o)}
             {selection.length === 1 && selection[0] === o.id && "w" in o && "h" in o && (
               <ResizeHandles o={o as Extract<Obj, { w: number; h: number }>} />
