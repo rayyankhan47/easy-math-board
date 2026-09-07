@@ -340,7 +340,15 @@ export function Board() {
           />
         )}
 
-        {caret && <CommandInput at={caret} onDone={() => setCaret(null)} />}
+        {caret && (
+          // Keyed by position: opening a caret elsewhere must be a new instance,
+          // otherwise React reuses this one and the old text is never written.
+          <CommandInput
+            key={`${caret.x},${caret.y}`}
+            at={caret}
+            onDone={() => setCaret(null)}
+          />
+        )}
         {!caret && <ActionPalette />}
         <Cursors />
       </div>

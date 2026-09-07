@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { describe, parse, suggest } from "@/lib/commands";
 import { useBoard } from "@/lib/store";
 
@@ -20,16 +20,37 @@ export function CommandInput({
   const add = useBoard((s) => s.add);
   /** Escape discards; anything else — including clicking away — commits. */
   const cancelled = useRef(false);
+  const committed = useRef(false);
+  /** Kept current so the unmount handler sees the latest text, not a stale closure. */
+  const latest = useRef("");
+  latest.current = v;
 
   const hits = useMemo(() => suggest(v), [v]);
   const preview = useMemo(() => (v.trim() ? describe(parse(v)) : ""), [v]);
 
-  const commit = (text: string) => {
-    if (cancelled.current) return onDone();
+  const write = (text: string) => {
+    if (cancelled.current || committed.current) return;
     const input = text.trim();
-    if (input) add(parse(input), at);
+    if (!input) return;
+    committed.current = true;
+    add(parse(input), at);
+  };
+
+  const commit = (text: string) => {
+    write(text);
     onDone();
   };
+
+  /**
+   * Dismissing the caret writes what you typed. Blur alone is not enough:
+   * clicking the canvas unmounts this input before any blur can fire, so the
+   * commit has to happen on the way out, whichever path got us here.
+   */
+  useEffect(
+    () => () => write(latest.current),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   function onKeyDown(e: React.KeyboardEvent) {
     e.stopPropagation();
@@ -67,7 +88,7 @@ export function CommandInput({
           setSel(-1);
         }}
         onKeyDown={onKeyDown}
-        onBlur={() => setTimeout(() => commit(v), 120)}
+        onBlur={() => setTimeout(onDone, 120)}
         className="w-[40ch] border-b border-[var(--text-ghost)] bg-transparent pb-1 font-mono text-[15px] text-[var(--text)] placeholder:text-[var(--text-faint)] outline-none focus:border-[var(--accent)]"
       />
 
