@@ -12,7 +12,7 @@ Everything here is deterministic. No model in the loop.
 | | status |
 |---|---|
 | S1 Expression | ✅ typed freely, rendered with KaTeX |
-| S2 Binding | ⬜ not yet — values do not flow between objects |
+| S2 Binding | ◐ definitions on the board feed inline answers; objects still do not export their numbers |
 | S3 Manipulation | ✅ simplify · expand · factor · solve · diff · integrate · **substitute · eliminate** · partials, gradient, Hessian |
 | S4 Ink | ✅ pen, highlighter, arrows, eraser — never tidied |
 | P1 Grid | ✅ matrices (rank, det, trace) and Cayley tables (full group axioms) |
@@ -25,7 +25,8 @@ Everything here is deterministic. No model in the loop.
 | T11 Modular clock | ✅ |
 | T6, T7, T10 | ⬜ complex plane, transformation space, probability |
 
-Nearest gap worth closing: **S2 bindings**, so a graph's V and E can feed an
+Nearest gap worth closing: the rest of **S2 bindings** — text definitions
+already feed the inline answers, but a graph's V and E still cannot feed an
 inequality you wrote beneath it. Then **P5 sets**, and the Tier 2 objects.
 
 ---

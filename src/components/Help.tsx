@@ -102,7 +102,10 @@ export function Help() {
             <li>clicking away commits what you typed — escape discards it</li>
             <li>
               type <span className="font-mono">1 + 2 =</span> and the answer appears ahead of the
-              caret — <span className="font-mono">→</span> accepts it, anything else ignores it
+              caret — <span className="font-mono">→</span> accepts it, anything else ignores it.
+              Anything you have defined counts: write{" "}
+              <span className="font-mono text-[var(--text)]">f(x) = x^2 + 1</span> somewhere and{" "}
+              <span className="font-mono text-[var(--text)]">f(10) =</span> answers 101
             </li>
             <li>
               <span className="font-mono">ctrl/⌘ Z</span> undoes anything ·{" "}
