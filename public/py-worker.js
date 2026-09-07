@@ -6,11 +6,14 @@
 import { loadPyodide } from "/pyodide/pyodide.mjs";
 
 const BASE = "/pyodide/";
-const WHEELS = [
-  "mpmath-1.4.1-py3-none-any.whl",
-  "sympy-1.14.0-py3-none-any.whl",
-  "networkx-3.6.1-py3-none-any.whl",
-];
+
+/** Written by scripts/fetch-pyodide.mjs, so names track the installed version. */
+async function wheelUrls() {
+  const res = await fetch(BASE + "wheels.json");
+  if (!res.ok) throw new Error("pyodide assets missing — run: npm run pyodide");
+  const { wheels } = await res.json();
+  return wheels.map((w) => BASE + w);
+}
 
 const PRELUDE = String.raw`
 import json
@@ -194,7 +197,7 @@ async function boot() {
   py = await loadPyodide({ indexURL: BASE });
   self.postMessage({ type: "status", status: "loading sympy, networkx" });
   // Explicit wheel URLs: skips lock resolution, which would drag in matplotlib.
-  await py.loadPackage(WHEELS.map((w) => BASE + w));
+  await py.loadPackage(await wheelUrls());
   await py.runPythonAsync(PRELUDE);
   self.postMessage({ type: "status", status: "ready" });
 }

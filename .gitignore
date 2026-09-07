@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python runtime — fetched by scripts/fetch-pyodide.mjs on install
+/public/pyodide/
