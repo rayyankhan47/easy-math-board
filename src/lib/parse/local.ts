@@ -20,10 +20,18 @@ export function latexify(s: string): string {
   t = t.replace(/\binf(inity)?\b/g, " \\infty ");
   t = t.replace(/\bin\b/g, " \\in ").replace(/\bsubset\b/g, " \\subset ");
   t = t.replace(/\bforall\b/g, " \\forall ").replace(/\bexists\b/g, " \\exists ");
-  t = t.replace(/\bsqrt\(([^()]*)\)/g, "\\sqrt{$1}");
-  for (const b of BIG) t = t.replace(new RegExp(`\\b${b}\\b`, "g"), `\\${b} `);
-  for (const f of FUNCS) t = t.replace(new RegExp(`\\b${f}\\b`, "g"), `\\${f} `);
-  for (const g of GREEK) t = t.replace(new RegExp(`\\b${g}\\b`, "g"), `\\${g} `);
+  /*
+   * \b is not a boundary between a digit and a letter, so "35sqrt(16)" never
+   * matched \bsqrt — implicit multiplication silently left the name unconverted.
+   * Guard on letters instead, and on a backslash so an already-converted
+   * command is not converted twice.
+   */
+  const name = (w: string) => new RegExp(`(?<![A-Za-z\\\\])${w}(?![A-Za-z])`, "g");
+
+  t = t.replace(/(?<![A-Za-z\\])sqrt\s*\(([^()]*)\)/g, "\\sqrt{$1}");
+  for (const b of BIG) t = t.replace(name(b), `\\${b} `);
+  for (const f of FUNCS) t = t.replace(name(f), `\\${f} `);
+  for (const g of GREEK) t = t.replace(name(g), `\\${g} `);
   t = t.replace(/\*/g, " \\cdot ");
   // command over command: tan(x)/sin(x)
   t = t.replace(
@@ -32,17 +40,17 @@ export function latexify(s: string): string {
   );
   // braced commands: sqrt(2)/2 has already become \sqrt{2}
   t = t.replace(
-    /(\\[a-zA-Z]+\{[^{}]*\})\s*\/\s*([A-Za-z0-9^_]+|\([^()]+\))/g,
+    /((?:\d+\.?\d*)?\\[a-zA-Z]+\{[^{}]*\})\s*\/\s*([A-Za-z0-9^_]+|\([^()]+\))/g,
     (_m, a, b) => `\\frac{${a}}{${String(b).replace(/^\(|\)$/g, "")}}`,
   );
   // A function call is part of the numerator, not a bracket to be split:
   // sin(x)/x is (sin x)/x, never sin(x/x).
   t = t.replace(
-    /(\\[a-zA-Z]+)\s*\(([^()]*)\)\s*\/\s*\(([^()]+)\)/g,
+    /((?:\d+\.?\d*)?\\[a-zA-Z]+)\s*\(([^()]*)\)\s*\/\s*\(([^()]+)\)/g,
     "\\frac{$1($2)}{$3}",
   );
   t = t.replace(
-    /(\\[a-zA-Z]+)\s*\(([^()]*)\)\s*\/\s*([A-Za-z0-9^_]+)/g,
+    /((?:\d+\.?\d*)?\\[a-zA-Z]+)\s*\(([^()]*)\)\s*\/\s*([A-Za-z0-9^_]+)/g,
     "\\frac{$1($2)}{$3}",
   );
   // simple fractions: (a+b)/(c), (a+b)/c, a/b — but never straight after a
