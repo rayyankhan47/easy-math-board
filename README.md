@@ -75,7 +75,7 @@ Below those are **pen** (`P`), **highlighter** (`M`), **arrow** (`A`) and
 the thing that broke. Strokes are never smoothed, straightened or tidied — the
 mess is the point.
 
-Every object sits in a soft frame — grab that to move it, and the object's own
+Every object sits in a soft 14px frame — grab that to move it, and the object's own
 interior stays free for panning, orbiting or editing. Clicking away from the
 caret commits what you typed, exactly as Enter would; escape discards.
 
@@ -97,7 +97,25 @@ depend on someone else's.
 Paste or drop an image anywhere. Select any object for its properties —
 text gets font, size, colour, bold and italic. Light, dark and system themes.
 
-See [DEPLOY.md](DEPLOY.md) for putting it online with accounts.
+## Contributing
+
+Adding an object type is three small pieces:
+
+1. an entry in `COMMANDS` (`src/lib/commands.ts`) — this alone gives you
+   parsing, autocomplete and the cheatsheet
+2. a renderer in `src/components/objects/`
+3. a panel in `src/components/Inspector.tsx`
+
+Add a case to `objSize` in `src/lib/bounds.ts` so the minimap and marquee know
+its footprint, and entries in `src/lib/actions.ts` if it should offer anything
+under `/`. Nothing else needs touching — persistence, undo, sharing and
+selection come from the object model.
+
+`npm run build` typechecks everything. There is no test suite yet; the maths
+engine is the part that would most repay one.
+
+MIT licensed — see [LICENSE](LICENSE). [DEPLOY.md](DEPLOY.md) covers putting it
+online, with or without accounts.
 
 ## Design rules
 

@@ -187,7 +187,10 @@ export function PlaneObject({ o }: { o: PlaneObj }) {
           });
         }}
       />
-      <div className="mt-1 flex items-center justify-between gap-3 font-mono text-[10px] text-[var(--text-faint)]">
+      <div
+        data-drag
+        className="mt-1 flex cursor-grab items-center justify-between gap-3 font-mono text-[10px] text-[var(--text-faint)]"
+      >
         <span className="truncate">
           {o.curves.filter((c) => c.on).map((c) => c.expr).join("  ·  ") || "no curves"}
         </span>

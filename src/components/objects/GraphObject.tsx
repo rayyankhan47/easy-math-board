@@ -63,6 +63,7 @@ export function GraphObject({ o }: { o: GraphObj }) {
       className="overflow-visible select-none"
       onPointerMove={onNodeMove}
       onPointerUp={() => (drag.current = null)}
+      style={{ cursor: "grab" }}
     >
       <g transform={`translate(${PAD},${PAD})`}>
         {o.edges.map((e, i) => {

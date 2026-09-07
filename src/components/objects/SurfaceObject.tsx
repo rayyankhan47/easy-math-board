@@ -228,7 +228,10 @@ export function SurfaceObject({ o }: { o: SurfaceObj }) {
           });
         }}
       />
-      <div className="mt-1 flex items-center justify-between gap-3 font-mono text-[10px] text-[var(--text-faint)]">
+      <div
+        data-drag
+        className="mt-1 flex cursor-grab items-center justify-between gap-3 font-mono text-[10px] text-[var(--text-faint)]"
+      >
         <span className="truncate">z = {o.expr}</span>
         <span className="shrink-0">drag to orbit</span>
       </div>

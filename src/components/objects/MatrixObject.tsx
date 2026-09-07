@@ -27,7 +27,7 @@ export function MatrixObject({ o }: { o: MatrixObj }) {
   // A Cayley table gets headers and a rule corner rather than brackets.
   if (o.headers) {
     return (
-      <div className="select-none">
+      <div className="cursor-grab select-none">
         <table className="border-collapse">
           <thead>
             <tr>
@@ -60,7 +60,7 @@ export function MatrixObject({ o }: { o: MatrixObj }) {
   }
 
   return (
-    <div className="flex items-stretch gap-1.5 select-none">
+    <div className="flex cursor-grab items-stretch gap-1.5 select-none">
       {o.label && (
         <div className="self-center pr-1 font-mono text-[13px] text-[var(--text-dim)]">{o.label} =</div>
       )}

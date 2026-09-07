@@ -241,8 +241,12 @@ export function Board() {
       if (o.kind === "ink" && strokeHit(o, x, y, r)) remove(o.id);
   }
 
-  /** These handle their own pointer events inside, so they move by the grip. */
-  const OWNS_INTERIOR = new Set(["plane", "surface", "graph", "matrix"]);
+  /**
+   * Only these use drags of their own (panning a plane, orbiting a surface), so
+   * only these need the frame to move them. Everything else drags from anywhere
+   * that is not itself interactive.
+   */
+  const OWNS_INTERIOR = new Set(["plane", "surface"]);
 
   const render = (o: Obj) => {
     switch (o.kind) {
@@ -296,7 +300,7 @@ export function Board() {
           <div
             key={o.id}
             className={`group absolute w-max rounded-[9px] transition-colors ${
-              o.kind === "ink" ? "" : "cursor-grab p-2.5 active:cursor-grabbing"
+              o.kind === "ink" ? "" : "cursor-grab p-[14px] active:cursor-grabbing"
             } ${
               selection.includes(o.id)
                 ? "bg-[var(--grab-strong)] ring-2 ring-[var(--accent)]"
@@ -307,10 +311,14 @@ export function Board() {
               e.stopPropagation();
               select(o.id, e.shiftKey);
               setCaret(null);
-              // Objects that own their interior are moved by grabbing the frame
-              // around them; a press that lands on the wrapper itself is the
-              // frame, anything deeper belongs to the object.
-              if (OWNS_INTERIOR.has(o.kind) && e.target !== e.currentTarget) return;
+              // The move tool drags anything, from anywhere.
+              if (tool !== "move" && OWNS_INTERIOR.has(o.kind)) {
+                // Otherwise these move by their frame or any zone marked as a
+                // handle (their caption strip); the rest is the object's own.
+                const el = e.target as Element;
+                const onHandle = el === e.currentTarget || !!el.closest?.("[data-drag]");
+                if (!onHandle) return;
+              }
               const w = toWorld(e.clientX, e.clientY);
               dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
             }}

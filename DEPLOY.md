@@ -108,7 +108,17 @@ work is an hour whenever you want it.
 
 ---
 
-## 5. Suggested order
+## 5. Open source first
+
+The current plan. Nothing below is needed for that: the board is local-first
+and fully static, so `vercel deploy` gives a working public link today, and the
+repo is MIT licensed. Sharing works without accounts — a room link is enough
+for two people to work together.
+
+Accounts only become worth it when you want boards to follow you between
+devices. Until then they are pure overhead.
+
+## 6. Suggested order
 
 1. **Deploy as-is, no accounts.** It already works fully local-first — push to
    Vercel and you have a shareable link today. Nothing below blocks this.
