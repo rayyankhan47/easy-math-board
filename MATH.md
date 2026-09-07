@@ -20,9 +20,10 @@ Everything here is deterministic. No model in the loop.
 | P3 Plot | ✅ **Cartesian plane** — pan/zoom inside, many curves, parameter sliders |
 | P4 Strip | ✅ 8 predicates + residues, divisors, multiples |
 | P5 Set | ⬜ not yet |
+| T8 Geometry | ◐ regular polygons and circles with full measurements; no constructions yet |
 | T9 3D | ✅ orbitable z = f(x,y) surfaces |
 | T11 Modular clock | ✅ |
-| T6–T8, T10 | ⬜ complex plane, transformation space, geometry, probability |
+| T6, T7, T10 | ⬜ complex plane, transformation space, probability |
 
 Nearest gap worth closing: **S2 bindings**, so a graph's V and E can feed an
 inequality you wrote beneath it. Then **P5 sets**, and the Tier 2 objects.

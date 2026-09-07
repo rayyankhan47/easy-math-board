@@ -20,12 +20,25 @@ Click anywhere and type. The right thing appears.
 | `surface x^2 - y^2` | a 3D surface you orbit |
 | `primes to 100` · `divisors of 60` · `mod 7 = 3` | an integer strip |
 | `clock 12 step 5` | ℤ_n as a dial |
+| `circle` · `square` · `pentagon` · `polygon 17` · `7-gon` | a shape that knows its own geometry |
 | `V - E + F = 2` · `alpha >= pi` | rendered maths |
 | `WHY???` | `WHY???`, untouched |
 
 Press `?` for everything it knows — that list is generated from the command
 registry, so it is never out of date. Suggestions appear as you type, so
 nothing has to be memorised first.
+
+## Shapes that carry their maths
+
+A regular n-gon reports its side, apothem, perimeter, area, interior and
+exterior angles, and its n(n−3)/2 diagonals — recomputed as you resize or
+change n. Toggle the circumcircle, the incircle, the vertices, or every
+diagonal at once (a pentagon's diagonals are a pentagram).
+
+It also tells you whether the polygon is **constructible** with compass and
+straightedge. That is Gauss–Wantzel: constructible exactly when n is a power of
+two times distinct Fermat primes. So the 17-gon says yes — Gauss's own result —
+and the 7-gon, the 9-gon and the 11-gon say no.
 
 ## Slash on anything
 
@@ -41,6 +54,7 @@ original is never touched; results arrive as new objects.
 | matrix | determinant · rank · trace · eigenvalues · characteristic polynomial · inverse · row reduce |
 | plane | **add the derivative** as another curve · add a curve · recentre |
 | numbers | highlight primes, squares, Fibonacci… · extend |
+| shape | write out its numbers · **as a cycle graph** · add/remove a side · diagonals · circumcircle |
 
 The cross-object ones are the fun part: a graph can become a matrix, a line of
 maths can become a plane or a 3D surface. Matrix operations run through SymPy,

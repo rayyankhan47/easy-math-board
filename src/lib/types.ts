@@ -1,6 +1,6 @@
 export type ObjKind =
   | "text" | "graph" | "matrix" | "plot" | "strip" | "clock"
-  | "plane" | "surface" | "image" | "ink";
+  | "plane" | "surface" | "image" | "ink" | "shape";
 
 export interface BaseObj {
   id: string;
@@ -138,9 +138,24 @@ export interface InkObj extends BaseObj {
   size: number;
 }
 
+/** A circle (sides = 0) or a regular n-gon. */
+export interface ShapeObj extends BaseObj {
+  kind: "shape";
+  sides: number;
+  w: number;
+  h: number;
+  rotation: number;
+  fill: string | null;
+  stroke: string;
+  showVertices: boolean;
+  showDiagonals: boolean;
+  showCircum: boolean;
+  showIn: boolean;
+}
+
 export type Obj =
   | TextObj | GraphObj | MatrixObj | PlotObj | StripObj | ClockObj
-  | PlaneObj | SurfaceObj | ImageObj | InkObj;
+  | PlaneObj | SurfaceObj | ImageObj | InkObj | ShapeObj;
 
 export type Spec =
   | { kind: "text"; latex: string | null; raw: string }
@@ -152,6 +167,7 @@ export type Spec =
   | { kind: "plane"; exprs: string[]; cx?: number; cy?: number; ppu?: number }
   | { kind: "surface"; expr: string; range?: number }
   | { kind: "image"; blobKey: string; w: number; h: number; alt?: string }
-  | { kind: "ink"; tool: InkTool; points: [number, number, number][]; color: string; size: number };
+  | { kind: "ink"; tool: InkTool; points: [number, number, number][]; color: string; size: number }
+  | { kind: "shape"; sides: number; r?: number };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);

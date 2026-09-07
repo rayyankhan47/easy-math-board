@@ -19,6 +19,7 @@ import { PlaneObject } from "./objects/PlaneObject";
 import { SurfaceObject } from "./objects/SurfaceObject";
 import { ImageObject } from "./objects/ImageObject";
 import { InkObject } from "./objects/InkObject";
+import { ShapeObject } from "./objects/ShapeObject";
 import { InkPalette } from "./InkPalette";
 import { ActionPalette } from "./ActionPalette";
 import { strokeHit, strokePath } from "@/lib/ink";
@@ -259,6 +260,7 @@ export function Board() {
       case "surface": return <SurfaceObject o={o} />;
       case "image": return <ImageObject o={o} />;
       case "ink": return <InkObject o={o} />;
+      case "shape": return <ShapeObject o={o} />;
       default: return <TextObject o={o} />;
     }
   };

@@ -58,6 +58,12 @@ const Icons = {
       <rect x="6.5" y="9" width="4" height="4" rx="1" opacity="0.45" />
     </svg>
   ),
+  shape: (
+    <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
+      <path d="M8 1.6 14 6l-2.3 7H4.3L2 6z" />
+      <circle cx="8" cy="8" r="2" opacity="0.4" />
+    </svg>
+  ),
   clock: (
     <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
       <circle cx="8" cy="8" r="6" />
@@ -87,6 +93,7 @@ const TOOLS: Tool[] = [
   { id: "graph", name: "Graph", hint: "vertices and edges", spawn: "graph 6 nodes" },
   { id: "matrix", name: "Matrix", hint: "editable grid", spawn: "matrix 3x3" },
   { id: "numbers", name: "Numbers", hint: "integer strip — primes, residues, divisors", spawn: "primes to 100" },
+  { id: "shape", name: "Shape", hint: "circle, square, or any regular n-gon", spawn: "pentagon" },
   { id: "clock", name: "Modular clock", hint: "Z_n as a dial", spawn: "clock 12" },
   { id: "image", name: "Image", hint: "or just paste one anywhere" },
 ];

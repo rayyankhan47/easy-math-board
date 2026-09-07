@@ -216,6 +216,38 @@ export const COMMANDS: Command[] = [
     build: (m) => ({ kind: "strip", from: 1, to: n(m[2]), rule: m[1].replace(/s$/, "") }),
   },
 
+  // ---------------------------------------------------------------- shapes
+  {
+    id: "circle", label: "circle", hint: "radius, area, circumference", group: "shape",
+    aliases: ["disc", "round"],
+    match: /^circle(?:\s+(\d+))?$/i,
+    build: (m) => ({ kind: "shape", sides: 0, r: m[1] ? n(m[1]) : undefined }),
+  },
+  {
+    id: "polygon", label: "polygon 7", hint: "a regular n-gon, any n", group: "shape",
+    aliases: ["ngon", "n-gon", "regular polygon", "sides"],
+    match: /^(?:(?:regular\s+)?(?:polygon|ngon|n-gon)\s*(\d+)|(\d+)[\s-]*gon)$/i,
+    build: (m) => ({ kind: "shape", sides: Math.max(3, Math.min(60, n(m[1] ?? m[2]))) }),
+  },
+  {
+    id: "square", label: "square", hint: "a regular 4-gon", group: "shape",
+    match: /^square$/i,
+    build: () => ({ kind: "shape", sides: 4 }),
+  },
+  {
+    id: "pentagon", label: "pentagon", hint: "constructible, unlike the 7-gon", group: "shape",
+    aliases: ["triangle", "hexagon", "heptagon", "octagon", "nonagon", "decagon", "dodecagon"],
+    match: /^(triangle|pentagon|hexagon|heptagon|octagon|nonagon|decagon|hendecagon|dodecagon|tridecagon|pentadecagon|hexadecagon|heptadecagon|icosagon)$/i,
+    build: (m) => ({
+      kind: "shape",
+      sides: {
+        triangle: 3, pentagon: 5, hexagon: 6, heptagon: 7, octagon: 8, nonagon: 9,
+        decagon: 10, hendecagon: 11, dodecagon: 12, tridecagon: 13,
+        pentadecagon: 15, hexadecagon: 16, heptadecagon: 17, icosagon: 20,
+      }[m[1].toLowerCase()]!,
+    }),
+  },
+
   // ---------------------------------------------------------------- clocks
   {
     id: "clock", label: "clock 12", hint: "Z_n as a dial", group: "numbers",
@@ -284,6 +316,7 @@ export function describe(spec: Spec): string {
     case "plane": return spec.exprs.length ? `plane · ${spec.exprs.join(", ")}` : "empty plane";
     case "surface": return `3d surface · z = ${spec.expr}`;
     case "image": return "image";
+    case "shape": return spec.sides === 0 ? "circle" : `regular ${spec.sides}-gon`;
     case "strip": return `numbers ${spec.from ?? 1}–${spec.to}${spec.rule ? ` · ${spec.rule}` : ""}`;
     case "clock": return `Z_${spec.n} dial`;
     default: return "latex" in spec && spec.latex ? "maths" : "note";

@@ -10,10 +10,11 @@ import { useEffect, useState } from "react";
 import { DEFAULT_STYLE, uid } from "@/lib/types";
 import type {
   ClockObj, GraphObj, ImageObj, MatrixObj, PlaneObj, PlotObj, StripObj,
-  SurfaceObj, TextObj, FontFamily, InkObj,
+  SurfaceObj, TextObj, FontFamily, InkObj, ShapeObj,
 } from "@/lib/types";
 import { CURVE_INK } from "./objects/PlaneObject";
 import { HIGHLIGHT_COLORS, INK_COLORS, SIZES } from "@/lib/ink";
+import { shapeFacts, shapeName, tidy as sTidy } from "@/lib/shapes";
 import { paramsIn } from "@/lib/axes";
 
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => (
@@ -50,6 +51,7 @@ export function Inspector() {
       {obj.kind === "image" && <ImagePanel o={obj} update={update} />}
       {obj.kind === "text" && <TextPanel o={obj} update={update} />}
       {obj.kind === "ink" && <InkPanel o={obj} update={update} />}
+      {obj.kind === "shape" && <ShapePanel o={obj} update={update} />}
     </aside>
   );
 }
@@ -642,5 +644,130 @@ function Num({
       onPointerDown={(e) => e.stopPropagation()}
       className="w-9 rounded-[3px] border border-[var(--border)] bg-[var(--inset)] px-1 py-0.5 text-center font-mono text-[12px] text-[var(--text)] outline-none focus:border-[var(--accent)]"
     />
+  );
+}
+
+
+/* ----------------------------------------------------------------- shape */
+
+function ShapePanel({ o, update }: { o: ShapeObj; update: Update }) {
+  const r = Math.max(8, Math.min(o.w, o.h) / 2 - 6);
+  const f = shapeFacts(o.sides, r);
+  const circle = o.sides === 0;
+
+  const setSides = (n: number) =>
+    update<ShapeObj>(o.id, { sides: n === 0 ? 0 : Math.max(3, Math.min(60, n)), showVertices: n >= 3 });
+  const setRadius = (v: number) => {
+    const s = Math.max(24, Math.min(600, v)) * 2 + 12;
+    update<ShapeObj>(o.id, { w: s, h: s });
+  };
+
+  return (
+    <>
+      <Head t={shapeName(o.sides)} />
+
+      <Row
+        k="sides"
+        v={
+          <span className="flex items-center gap-1">
+            <Num value={o.sides} min={0} max={60} onChange={setSides} />
+            <button
+              onClick={() => setSides(circle ? 6 : 0)}
+              className="rounded-[3px] border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--text-dim)] hover:text-[var(--text)]"
+            >
+              {circle ? "n-gon" : "circle"}
+            </button>
+          </span>
+        }
+      />
+      <Row k="radius" v={<Num value={Math.round(r)} min={24} max={600} onChange={setRadius} />} />
+
+      <div className="my-2 border-t border-[var(--border)]" />
+
+      {circle ? (
+        <>
+          <Row k="circumference" v={sTidy(f.perimeter)} />
+          <Row k="area" v={sTidy(f.area)} />
+        </>
+      ) : (
+        <>
+          <Row k="side" v={sTidy(f.side)} />
+          <Row k="apothem" v={sTidy(f.apothem)} />
+          <Row k="perimeter" v={sTidy(f.perimeter)} />
+          <Row k="area" v={sTidy(f.area)} />
+          <Row k="interior ∠" v={`${sTidy(f.interior)}°`} />
+          <Row k="exterior ∠" v={`${sTidy(f.exterior)}°`} />
+          <Row k="diagonals" v={f.diagonals} />
+          <Row
+            k="constructible"
+            v={
+              <span className={f.constructible ? "text-[var(--ok)]" : "text-[var(--danger)]"}>
+                {f.constructible ? "yes" : "no"}
+              </span>
+            }
+          />
+        </>
+      )}
+
+      {!circle && (
+        <>
+          <Label>rotation</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range" min={0} max={360} value={Math.round((o.rotation * 180) / Math.PI)}
+              onChange={(e) => update<ShapeObj>(o.id, { rotation: (+e.target.value * Math.PI) / 180 })}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="h-1 flex-1 accent-[var(--accent)]"
+            />
+            <span className="w-8 text-right font-mono text-[10px] text-[var(--text-dim)]">
+              {Math.round((o.rotation * 180) / Math.PI)}°
+            </span>
+          </div>
+        </>
+      )}
+
+      <Label>show</Label>
+      <div className="flex flex-wrap gap-1.5">
+        <Toggle on={o.showVertices} onClick={() => update<ShapeObj>(o.id, { showVertices: !o.showVertices })}>
+          vertices
+        </Toggle>
+        <Toggle on={o.showCircum} onClick={() => update<ShapeObj>(o.id, { showCircum: !o.showCircum })}>
+          circumcircle
+        </Toggle>
+      </div>
+      {!circle && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <Toggle on={o.showIn} onClick={() => update<ShapeObj>(o.id, { showIn: !o.showIn })}>
+            incircle
+          </Toggle>
+          <Toggle on={o.showDiagonals} onClick={() => update<ShapeObj>(o.id, { showDiagonals: !o.showDiagonals })}>
+            diagonals
+          </Toggle>
+        </div>
+      )}
+
+      <Label>fill</Label>
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          onClick={() => update<ShapeObj>(o.id, { fill: null })}
+          className={`h-5 w-5 rounded-full border border-dashed border-[var(--border-strong)] text-[9px] text-[var(--text-faint)] ${
+            o.fill === null ? "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--panel)]" : ""
+          }`}
+          title="no fill"
+        >
+          ∅
+        </button>
+        {INK_COLORS.map((c) => (
+          <button
+            key={c}
+            onClick={() => update<ShapeObj>(o.id, { fill: `${c}33`, stroke: c })}
+            className={`h-5 w-5 rounded-full transition-transform hover:scale-110 ${
+              o.stroke === c ? "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--panel)]" : "ring-1 ring-[var(--border-strong)]"
+            }`}
+            style={{ background: c }}
+          />
+        ))}
+      </div>
+    </>
   );
 }

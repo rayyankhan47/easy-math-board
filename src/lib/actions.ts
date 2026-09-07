@@ -2,8 +2,9 @@
 
 import { ops } from "./engine";
 import { rhs } from "./axes";
-import { complete, pairsToEdges, circleNodes, degrees, chromatic } from "./graphs";
-import type { GraphObj, MatrixObj, Obj, ObjKind, PlaneObj, Spec, StripObj, SurfaceObj, ClockObj } from "./types";
+import { complete, pairsToEdges, circleNodes, cycle, degrees, chromatic } from "./graphs";
+import { shapeFacts, tidy as sTidy } from "./shapes";
+import type { GraphObj, MatrixObj, Obj, ObjKind, PlaneObj, ShapeObj, Spec, StripObj, SurfaceObj, ClockObj } from "./types";
 import { uid } from "./types";
 import { CURVE_INK } from "@/components/objects/PlaneObject";
 
@@ -277,6 +278,66 @@ export const ACTIONS: Action[] = [
     run: (o, c) => {
       const k = o as ClockObj;
       c.update<ClockObj>(k.id, { step: (k.step % k.n) + 1 });
+    },
+  },
+
+  // ---------------------------------------------------------------- shape
+  {
+    id: "sh-numbers", label: "write out its numbers", hint: "area, perimeter, angles", kinds: ["shape"],
+    aliases: ["area", "perimeter", "measurements", "properties"],
+    run: (o, c) => {
+      const sh = o as ShapeObj;
+      const r = Math.max(8, Math.min(sh.w, sh.h) / 2 - 6);
+      const f = shapeFacts(sh.sides, r);
+      if (sh.sides === 0) {
+        asText(c, `r = ${sTidy(r)}, C = ${sTidy(f.perimeter)}, A = ${sTidy(f.area)}`,
+          `r = ${sTidy(r)},\\ C = ${sTidy(f.perimeter)},\\ A = ${sTidy(f.area)}`);
+        return;
+      }
+      asText(
+        c,
+        `n = ${f.sides}, s = ${sTidy(f.side)}, P = ${sTidy(f.perimeter)}, A = ${sTidy(f.area)}`,
+        `n = ${f.sides},\\ s = ${sTidy(f.side)},\\ P = ${sTidy(f.perimeter)},\\ A = ${sTidy(f.area)}`,
+      );
+    },
+  },
+  {
+    id: "sh-graph", label: "as a cycle graph", hint: "its vertices and edges", kinds: ["shape"],
+    aliases: ["graph", "cycle", "c_n"],
+    run: (o, c) => {
+      const sh = o as ShapeObj;
+      if (sh.sides < 3) return c.fail("a circle has no vertices");
+      c.add(
+        { kind: "graph", n: sh.sides, edges: cycle(sh.sides), label: `C_${sh.sides}` },
+        c.below(),
+      );
+    },
+  },
+  {
+    id: "sh-more", label: "add a side", hint: "n + 1", kinds: ["shape"],
+    run: (o, c) => {
+      const sh = o as ShapeObj;
+      c.update<ShapeObj>(sh.id, { sides: Math.min(60, Math.max(3, sh.sides + 1)), showVertices: true });
+    },
+  },
+  {
+    id: "sh-less", label: "remove a side", hint: "n − 1", kinds: ["shape"],
+    run: (o, c) => {
+      const sh = o as ShapeObj;
+      c.update<ShapeObj>(sh.id, { sides: Math.max(3, sh.sides - 1) });
+    },
+  },
+  {
+    id: "sh-diag", label: "show diagonals", hint: "all n(n−3)/2 of them", kinds: ["shape"],
+    run: (o, c) => c.update<ShapeObj>(o.id, { showDiagonals: !(o as ShapeObj).showDiagonals }),
+  },
+  {
+    id: "sh-circles", label: "circumcircle and incircle", hint: "both dashed guides", kinds: ["shape"],
+    aliases: ["inscribed", "circumscribed"],
+    run: (o, c) => {
+      const sh = o as ShapeObj;
+      const on = !(sh.showCircum && sh.showIn);
+      c.update<ShapeObj>(sh.id, { showCircum: on, showIn: on && sh.sides >= 3 });
     },
   },
 

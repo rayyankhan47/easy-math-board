@@ -27,6 +27,8 @@ export function objSize(o: Obj): { w: number; h: number } {
     }
     case "clock":
       return { w: 152, h: 172 };
+    case "shape":
+      return { w: o.w, h: o.h + 14 };
     case "ink": {
       const b = inkBounds(o.points, o.size);
       return { w: Math.max(6, b.w), h: Math.max(6, b.h) };

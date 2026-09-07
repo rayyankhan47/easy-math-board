@@ -68,7 +68,10 @@ export function Help() {
             Maths renders as maths — <span className="font-mono text-[var(--text)]">E &lt;= 3V - 6</span>,{" "}
             <span className="font-mono text-[var(--text)]">alpha + beta &gt;= pi</span>. Everything else
             stays exactly as you typed it, including{" "}
-            <span className="font-mono text-[var(--text)]">WHY???</span>
+            <span className="font-mono text-[var(--text)]">WHY???</span>. Shapes know their own
+            geometry — a <span className="font-mono text-[var(--text)]">polygon 17</span> will tell
+            you it is constructible with compass and straightedge, and a{" "}
+            <span className="font-mono text-[var(--text)]">7-gon</span> that it is not
           </p>
         </div>
 

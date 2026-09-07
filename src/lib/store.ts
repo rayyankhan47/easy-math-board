@@ -96,6 +96,16 @@ function specToObj(spec: Spec, at: { x: number; y: number }): Obj {
       };
     case "image":
       return { ...base, kind: "image", blobKey: spec.blobKey, w: spec.w, h: spec.h, alt: spec.alt ?? "" };
+    case "shape": {
+      const r = spec.r ?? 78;
+      return {
+        ...base, kind: "shape", sides: spec.sides,
+        w: r * 2 + 12, h: r * 2 + 12, rotation: 0,
+        fill: null, stroke: "var(--text)",
+        showVertices: spec.sides >= 3, showDiagonals: false,
+        showCircum: false, showIn: false,
+      };
+    }
     case "ink":
       return {
         ...base, kind: "ink",
