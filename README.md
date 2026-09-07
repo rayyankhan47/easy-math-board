@@ -7,3 +7,13 @@ videos so I thought it'd be cool to have my own personalized "math notebook" but
 unannoying to use.
 
 Have fun
+## Running it
+
+```bash
+npm install
+npm run dev
+```
+
+`npm install` also pulls down the Python runtime (SymPy and NetworkX, ~21MB)
+into `public/pyodide` — it isn't in the repo. `npm run pyodide` redoes that by
+hand if it ever goes missing.
