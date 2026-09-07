@@ -4,7 +4,7 @@ import { create } from "zustand";
 import type { Theme } from "./theme";
 
 export type UiScale = "small" | "normal" | "large";
-export type Tool = "select" | "move";
+export type Tool = "select" | "move" | "pen" | "highlighter" | "arrow" | "eraser";
 
 export interface Settings {
   theme: Theme;
@@ -18,6 +18,9 @@ export interface Settings {
   showTooltips: boolean;
   angleUnit: "rad" | "deg";
   confirmDelete: boolean;
+  inkColor: string;
+  highlightColor: string;
+  inkSize: number;
 }
 
 export const DEFAULTS: Settings = {
@@ -32,6 +35,9 @@ export const DEFAULTS: Settings = {
   showTooltips: true,
   angleUnit: "rad",
   confirmDelete: false,
+  inkColor: "#2383e2",
+  highlightColor: "#ffd93d",
+  inkSize: 4,
 };
 
 const KEY = "margin.settings";
@@ -57,6 +63,7 @@ const pick = (s: SettingsState): Settings => ({
   uiScale: s.uiScale, reduceMotion: s.reduceMotion, clickToType: s.clickToType,
   showMinimap: s.showMinimap, showTooltips: s.showTooltips,
   angleUnit: s.angleUnit, confirmDelete: s.confirmDelete,
+  inkColor: s.inkColor, highlightColor: s.highlightColor, inkSize: s.inkSize,
 });
 
 export const SCALE: Record<UiScale, number> = { small: 0.9, normal: 1, large: 1.15 };

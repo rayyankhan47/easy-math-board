@@ -1,6 +1,6 @@
 export type ObjKind =
   | "text" | "graph" | "matrix" | "plot" | "strip" | "clock"
-  | "plane" | "surface" | "image";
+  | "plane" | "surface" | "image" | "ink";
 
 export interface BaseObj {
   id: string;
@@ -126,9 +126,21 @@ export interface ImageObj extends BaseObj {
   alt: string;
 }
 
+export type InkTool = "pen" | "highlighter" | "arrow";
+
+/** A stroke exactly as drawn. Never smoothed into something tidier. */
+export interface InkObj extends BaseObj {
+  kind: "ink";
+  tool: InkTool;
+  /** [x, y, pressure], relative to the object's own origin. */
+  points: [number, number, number][];
+  color: string;
+  size: number;
+}
+
 export type Obj =
   | TextObj | GraphObj | MatrixObj | PlotObj | StripObj | ClockObj
-  | PlaneObj | SurfaceObj | ImageObj;
+  | PlaneObj | SurfaceObj | ImageObj | InkObj;
 
 export type Spec =
   | { kind: "text"; latex: string | null; raw: string }
@@ -139,6 +151,7 @@ export type Spec =
   | { kind: "clock"; n: number; step?: number }
   | { kind: "plane"; exprs: string[]; cx?: number; cy?: number; ppu?: number }
   | { kind: "surface"; expr: string; range?: number }
-  | { kind: "image"; blobKey: string; w: number; h: number; alt?: string };
+  | { kind: "image"; blobKey: string; w: number; h: number; alt?: string }
+  | { kind: "ink"; tool: InkTool; points: [number, number, number][]; color: string; size: number };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);

@@ -51,6 +51,11 @@ type — hover an icon for a moment and it tells you what it is. The top two are
 tools rather than objects: **select** (`V`) drags a box over several objects,
 **move** (`H`) pans the board. Holding space pans from either.
 
+Below those are **pen** (`P`), **highlighter** (`M`), **arrow** (`A`) and
+**eraser** (`E`). Circle a result, scrawl `WHY???` beside it, draw an arrow at
+the thing that broke. Strokes are never smoothed, straightened or tidied — the
+mess is the point.
+
 Selected objects get corner handles; dragging one keeps the proportions, and
 shift stretches freely. A minimap in the corner shows the whole workspace and
 jumps you anywhere in it. The gear holds theme, grid, snapping, interface size,
@@ -75,7 +80,8 @@ See [DEPLOY.md](DEPLOY.md) for putting it online with accounts.
 
 - **Nothing to learn.** Suggestions and a cheatsheet, never a syntax you must
   memorise first.
-- **The mess is sacred.** Notes stay exactly as typed. Nothing is beautified.
+- **The mess is sacred.** Notes stay exactly as typed and strokes exactly as
+  drawn. Nothing is beautified.
 - **Results are new lines.** An operation never overwrites what you wrote.
 - **No guessing.** Every number on screen comes from an algorithm — SymPy,
   NetworkX, or code in `src/lib`. Nothing is inferred by a model.

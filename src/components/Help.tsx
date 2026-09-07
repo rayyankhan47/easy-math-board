@@ -97,6 +97,13 @@ export function Help() {
             <li>drag a corner of a selected object to resize — shift stretches freely</li>
             <li>the minimap in the corner jumps you anywhere on the board</li>
             <li>
+              <span className="font-mono">P</span> pen ·{" "}
+              <span className="font-mono">M</span> highlighter ·{" "}
+              <span className="font-mono">A</span> arrow ·{" "}
+              <span className="font-mono">E</span> eraser
+            </li>
+            <li>scribble over anything — strokes are kept exactly as drawn</li>
+            <li>
               <span className="text-[var(--accent-soft)]">Share</span> makes a link; anyone who
               opens it joins the same board, with their own cursor
             </li>

@@ -10,9 +10,10 @@ import { useEffect, useState } from "react";
 import { DEFAULT_STYLE, uid } from "@/lib/types";
 import type {
   ClockObj, GraphObj, ImageObj, MatrixObj, PlaneObj, PlotObj, StripObj,
-  SurfaceObj, TextObj, FontFamily,
+  SurfaceObj, TextObj, FontFamily, InkObj,
 } from "@/lib/types";
 import { CURVE_INK } from "./objects/PlaneObject";
+import { HIGHLIGHT_COLORS, INK_COLORS, SIZES } from "@/lib/ink";
 import { paramsIn } from "@/lib/axes";
 
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => (
@@ -48,6 +49,7 @@ export function Inspector() {
       {obj.kind === "surface" && <SurfacePanel o={obj} update={update} />}
       {obj.kind === "image" && <ImagePanel o={obj} update={update} />}
       {obj.kind === "text" && <TextPanel o={obj} update={update} />}
+      {obj.kind === "ink" && <InkPanel o={obj} update={update} />}
     </aside>
   );
 }
@@ -568,3 +570,46 @@ const Toggle = ({
     {children}
   </button>
 );
+
+
+/* ------------------------------------------------------------------- ink */
+
+function InkPanel({ o, update }: { o: InkObj; update: Update }) {
+  const palette = o.tool === "highlighter" ? HIGHLIGHT_COLORS : INK_COLORS;
+  return (
+    <>
+      <Head t={o.tool} />
+      <Row k="points" v={o.points.length} />
+
+      <Label>colour</Label>
+      <div className="flex flex-wrap gap-1.5">
+        {palette.map((c) => (
+          <button
+            key={c}
+            onClick={() => update<InkObj>(o.id, { color: c })}
+            className={`h-5 w-5 rounded-full transition-transform hover:scale-110 ${
+              o.color === c ? "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--panel)]" : "ring-1 ring-[var(--border-strong)]"
+            }`}
+            style={{ background: c }}
+          />
+        ))}
+      </div>
+
+      <Label>nib</Label>
+      <div className="flex gap-1.5">
+        {SIZES.map((s) => {
+          const v = o.tool === "highlighter" ? s * 3 : s;
+          return (
+            <Btn key={s} onClick={() => update<InkObj>(o.id, { size: v })}>
+              {o.size === v ? `● ${s}` : String(s)}
+            </Btn>
+          );
+        })}
+      </div>
+
+      <p className="mt-3 text-[10px] leading-relaxed text-[var(--text-ghost)]">
+        strokes are kept exactly as drawn
+      </p>
+    </>
+  );
+}

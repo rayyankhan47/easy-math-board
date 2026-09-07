@@ -1,4 +1,5 @@
 import { GRAPH_R } from "./graphs";
+import { inkBounds } from "./ink";
 import type { Obj } from "./types";
 
 /**
@@ -26,6 +27,10 @@ export function objSize(o: Obj): { w: number; h: number } {
     }
     case "clock":
       return { w: 152, h: 172 };
+    case "ink": {
+      const b = inkBounds(o.points, o.size);
+      return { w: Math.max(6, b.w), h: Math.max(6, b.h) };
+    }
     default: {
       const size = o.style?.size ?? 16;
       return { w: Math.max(40, o.raw.length * size * 0.55), h: size * 1.6 };

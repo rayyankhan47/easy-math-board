@@ -18,6 +18,9 @@ import { ClockObject } from "./objects/ClockObject";
 import { PlaneObject } from "./objects/PlaneObject";
 import { SurfaceObject } from "./objects/SurfaceObject";
 import { ImageObject } from "./objects/ImageObject";
+import { InkObject } from "./objects/InkObject";
+import { InkPalette } from "./InkPalette";
+import { strokeHit, strokePath } from "@/lib/ink";
 import { SettingsButton } from "./Settings";
 import { Minimap } from "./Minimap";
 import { ResizeHandles } from "./ResizeHandles";
@@ -36,6 +39,9 @@ export function Board() {
   const surface = useRef<HTMLDivElement>(null);
   const panning = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
   const marquee = useRef<{ x: number; y: number } | null>(null);
+  const drawing = useRef<[number, number, number][] | null>(null);
+  const [wet, setWet] = useState<[number, number, number][] | null>(null);
+  const erasing = useRef(false);
   const [band, setBand] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [space, setSpace] = useState(false);
   const tool = useSettings((s) => s.tool);
@@ -95,8 +101,13 @@ export function Board() {
         if (settings.confirmDelete && !confirm(`Delete ${selection.length} object(s)?`)) return;
         selection.forEach(remove);
       }
-      if (e.key === "v" && !caret) useSettings.getState().setTool("select");
-      if (e.key === "h" && !caret) useSettings.getState().setTool("move");
+      if (!caret && !e.metaKey && !e.ctrlKey) {
+        const keys: Record<string, string> = {
+          v: "select", h: "move", p: "pen", m: "highlighter", a: "arrow", e: "eraser",
+        };
+        const t = keys[e.key.toLowerCase()];
+        if (t) useSettings.getState().setTool(t as never);
+      }
       if (e.code === "Space" && !caret) setSpace(true);
     };
     const onUp = (e: KeyboardEvent) => e.code === "Space" && setSpace(false);
@@ -114,11 +125,18 @@ export function Board() {
     if (e.target !== e.currentTarget) return;
     select(null);
     setCaret(null);
+    const w = toWorld(e.clientX, e.clientY);
     if (tool === "move" || space || e.button === 1) {
       panning.current = { px: e.clientX, py: e.clientY, ox: pan.x, oy: pan.y };
+    } else if (tool === "pen" || tool === "highlighter" || tool === "arrow") {
+      drawing.current = [[w.x, w.y, e.pressure || 0.5]];
+      setWet(drawing.current);
+    } else if (tool === "eraser") {
+      erasing.current = true;
+      erase(w.x, w.y);
     } else {
-      marquee.current = toWorld(e.clientX, e.clientY);
-      setBand({ ...marquee.current, w: 0, h: 0 });
+      marquee.current = w;
+      setBand({ ...w, w: 0, h: 0 });
     }
   }
 
@@ -128,6 +146,11 @@ export function Board() {
     if (panning.current) {
       const p = panning.current;
       setView({ x: p.ox + (e.clientX - p.px), y: p.oy + (e.clientY - p.py) }, zoom);
+    } else if (drawing.current) {
+      drawing.current = [...drawing.current, [w.x, w.y, e.pressure || 0.5]];
+      setWet(drawing.current);
+    } else if (erasing.current) {
+      erase(w.x, w.y);
     } else if (marquee.current) {
       const a = marquee.current;
       setBand({
@@ -151,6 +174,28 @@ export function Board() {
       panning.current = null;
       if (still && settings.clickToType) setCaret(toWorld(e.clientX, e.clientY));
     }
+    if (drawing.current) {
+      const pts = drawing.current;
+      drawing.current = null;
+      setWet(null);
+      // a tap is not a stroke
+      if (pts.length > 1) {
+        const ox = pts[0][0];
+        const oy = pts[0][1];
+        useBoard.getState().add(
+          {
+            kind: "ink",
+            tool: tool as "pen" | "highlighter" | "arrow",
+            points: pts.map(([x, y, p]) => [x - ox, y - oy, p] as [number, number, number]),
+            color: tool === "highlighter" ? settings.highlightColor : settings.inkColor,
+            size: tool === "highlighter" ? settings.inkSize * 3 : settings.inkSize,
+          },
+          { x: ox, y: oy },
+        );
+        select(null);
+      }
+    }
+    erasing.current = false;
     if (marquee.current) {
       const a = marquee.current;
       const b = toWorld(e.clientX, e.clientY);
@@ -188,6 +233,13 @@ export function Board() {
     }
   }
 
+  /** Remove any stroke the eraser passes over. */
+  function erase(x: number, y: number) {
+    const r = 12 / zoom;
+    for (const o of useBoard.getState().objs)
+      if (o.kind === "ink" && strokeHit(o, x, y, r)) remove(o.id);
+  }
+
   /** These handle their own pointer events inside, so they move by the grip. */
   const OWNS_INTERIOR = new Set(["plane", "surface", "graph", "matrix"]);
 
@@ -201,6 +253,7 @@ export function Board() {
       case "plane": return <PlaneObject o={o} />;
       case "surface": return <SurfaceObject o={o} />;
       case "image": return <ImageObject o={o} />;
+      case "ink": return <InkObject o={o} />;
       default: return <TextObject o={o} />;
     }
   };
@@ -223,7 +276,14 @@ export function Board() {
               : "none",
         backgroundSize: `${settings.gridSize * zoom}px ${settings.gridSize * zoom}px`,
         backgroundPosition: `${pan.x}px ${pan.y}px`,
-        cursor: tool === "move" || space ? "grab" : "default",
+        cursor:
+          tool === "move" || space
+            ? "grab"
+            : tool === "eraser"
+              ? "cell"
+              : tool === "select"
+                ? "default"
+                : "crosshair",
         fontSize: `${SCALE[settings.uiScale] * 100}%`,
       }}
     >
@@ -234,7 +294,7 @@ export function Board() {
         {objs.map((o) => (
           <div
             key={o.id}
-            className={`group absolute w-max rounded-[5px] p-1.5 ${
+            className={`group absolute w-max rounded-[5px] ${o.kind === "ink" ? "" : "p-1.5"} ${
               selection.includes(o.id)
                 ? "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--bg)]"
                 : "hover:ring-1 hover:ring-[var(--border-strong)]"
@@ -249,6 +309,7 @@ export function Board() {
               dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
             }}
           >
+            {o.kind !== "ink" && (
             <button
               title="drag to move"
               onPointerDown={(e) => {
@@ -263,12 +324,24 @@ export function Board() {
             >
               <span className="text-[9px] tracking-[0.2em]">⋯</span>
             </button>
+            )}
             {render(o)}
             {selection.length === 1 && selection[0] === o.id && "w" in o && "h" in o && (
               <ResizeHandles o={o as Extract<Obj, { w: number; h: number }>} />
             )}
           </div>
         ))}
+
+        {wet && wet.length > 1 && (
+          <svg className="pointer-events-none absolute inset-0 overflow-visible" style={{ zIndex: 25 }}>
+            <path
+              d={strokePath(wet, tool === "highlighter" ? "highlighter" : tool === "arrow" ? "arrow" : "pen",
+                tool === "highlighter" ? settings.inkSize * 3 : settings.inkSize)}
+              fill={tool === "highlighter" ? settings.highlightColor : settings.inkColor}
+              opacity={tool === "highlighter" ? 0.42 : 1}
+            />
+          </svg>
+        )}
 
         {band && (
           <div
@@ -290,6 +363,7 @@ export function Board() {
       </div>
 
       <Toolbar onText={(at) => { select(null); setCaret(at); }} />
+      <InkPalette />
       <Inspector />
       <OpsBar />
 

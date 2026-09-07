@@ -137,34 +137,51 @@ export function Toolbar({ onText }: { onText: (at: { x: number; y: number }) => 
         onPointerDown={(e) => e.stopPropagation()}
       >
         <Tip name="Select" hint="drag a box to pick several — V">
-          <button
-            onClick={() => setTool("select")}
-            aria-label="Select"
-            className={`flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors ${
-              tool === "select"
-                ? "bg-[var(--accent-wash)] text-[var(--accent)]"
-                : "text-[var(--text-dim)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
-            }`}
-          >
+          <ToolBtn on={tool === "select"} label="Select" onClick={() => setTool("select")}>
             <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
               <path d="M3 2l4.5 11 1.8-4.7L14 6.5z" />
             </svg>
-          </button>
+          </ToolBtn>
         </Tip>
         <Tip name="Move" hint="drag to pan the board — H, or hold space">
-          <button
-            onClick={() => setTool("move")}
-            aria-label="Move"
-            className={`flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors ${
-              tool === "move"
-                ? "bg-[var(--accent-wash)] text-[var(--accent)]"
-                : "text-[var(--text-dim)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
-            }`}
-          >
+          <ToolBtn on={tool === "move"} label="Move" onClick={() => setTool("move")}>
             <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
               <path d="M8 1.5v13M1.5 8h13M8 1.5 6 3.5M8 1.5l2 2M8 14.5l-2-2M8 14.5l2-2M1.5 8l2-2M1.5 8l2 2M14.5 8l-2-2M14.5 8l-2 2" />
             </svg>
-          </button>
+          </ToolBtn>
+        </Tip>
+
+        <Tip name="Pen" hint="draw freehand — P">
+          <ToolBtn on={tool === "pen"} label="Pen" onClick={() => setTool("pen")}>
+            <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
+              <path d="M11.5 2.2 13.8 4.5 5.6 12.7 2.4 13.6l0.9-3.2z" />
+              <path d="M10 3.7l2.3 2.3" />
+            </svg>
+          </ToolBtn>
+        </Tip>
+        <Tip name="Highlighter" hint="wide translucent marker — M">
+          <ToolBtn on={tool === "highlighter"} label="Highlighter" onClick={() => setTool("highlighter")}>
+            <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
+              <path d="M4 10.5 9.8 4.7a1.6 1.6 0 0 1 2.3 0l0.8 0.8a1.6 1.6 0 0 1 0 2.3L7.1 13.6H4.3z" />
+              <path d="M2.5 14.2h11" strokeWidth="2" />
+            </svg>
+          </ToolBtn>
+        </Tip>
+        <Tip name="Arrow" hint="draw a line that points — A">
+          <ToolBtn on={tool === "arrow"} label="Arrow" onClick={() => setTool("arrow")}>
+            <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
+              <path d="M2.5 13C5 9.5 8 5.5 13 3" />
+              <path d="M9.2 2.4 13.2 2.9 12.7 6.9" />
+            </svg>
+          </ToolBtn>
+        </Tip>
+        <Tip name="Eraser" hint="drag over strokes to remove them — E">
+          <ToolBtn on={tool === "eraser"} label="Eraser" onClick={() => setTool("eraser")}>
+            <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
+              <path d="M6.4 13.5 2.6 9.7a1.2 1.2 0 0 1 0-1.7l5.6-5.6a1.2 1.2 0 0 1 1.7 0l3.6 3.6a1.2 1.2 0 0 1 0 1.7l-5.4 5.8z" />
+              <path d="M13.5 13.5h-7" />
+            </svg>
+          </ToolBtn>
         </Tip>
 
         <div className="my-1 h-px bg-[var(--border)]" />
@@ -227,5 +244,24 @@ function Tip({ name, hint, children }: { name: string; hint: string; children: R
         </div>
       )}
     </div>
+  );
+}
+
+
+function ToolBtn({
+  on, label, onClick, children,
+}: { on: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className={`flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors ${
+        on
+          ? "bg-[var(--accent-wash)] text-[var(--accent)]"
+          : "text-[var(--text-dim)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

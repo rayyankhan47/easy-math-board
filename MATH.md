@@ -14,7 +14,7 @@ Everything here is deterministic. No model in the loop.
 | S1 Expression | ✅ typed freely, rendered with KaTeX |
 | S2 Binding | ⬜ not yet — values do not flow between objects |
 | S3 Manipulation | ✅ simplify · expand · factor · solve · diff · integrate · **substitute · eliminate** |
-| S4 Ink | ⬜ no freehand yet — images can be pasted in |
+| S4 Ink | ✅ pen, highlighter, arrows, eraser — never tidied |
 | P1 Grid | ✅ matrices (rank, det, trace) and Cayley tables (full group axioms) |
 | P2 Graph | ✅ 12 families, drag/rewire, real planarity, girth, χ, diameter, cliques |
 | P3 Plot | ✅ **Cartesian plane** — pan/zoom inside, many curves, parameter sliders |
@@ -24,9 +24,8 @@ Everything here is deterministic. No model in the loop.
 | T11 Modular clock | ✅ |
 | T6–T8, T10 | ⬜ complex plane, transformation space, geometry, probability |
 
-Nearest gaps worth closing, in order: **S2 bindings** (so a graph's V and E can
-feed an inequality), **S4 ink** (the mess layer the whole idea rests on), and
-**P5 sets**.
+Nearest gap worth closing: **S2 bindings**, so a graph's V and E can feed an
+inequality you wrote beneath it. Then **P5 sets**, and the Tier 2 objects.
 
 ---
 

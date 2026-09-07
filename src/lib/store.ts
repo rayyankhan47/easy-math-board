@@ -96,6 +96,11 @@ function specToObj(spec: Spec, at: { x: number; y: number }): Obj {
       };
     case "image":
       return { ...base, kind: "image", blobKey: spec.blobKey, w: spec.w, h: spec.h, alt: spec.alt ?? "" };
+    case "ink":
+      return {
+        ...base, kind: "ink",
+        tool: spec.tool, points: spec.points, color: spec.color, size: spec.size,
+      };
     default:
       return { ...base, kind: "text", raw: spec.raw, latex: spec.latex, style: { ...DEFAULT_STYLE } };
   }
