@@ -1,5 +1,7 @@
 "use client";
 
+import { vh, vw } from "@/lib/viewport";
+
 import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/store";
 import { CommandInput } from "./CommandInput";
@@ -16,7 +18,11 @@ import { ClockObject } from "./objects/ClockObject";
 import { PlaneObject } from "./objects/PlaneObject";
 import { SurfaceObject } from "./objects/SurfaceObject";
 import { ImageObject } from "./objects/ImageObject";
-import { ThemeToggle } from "./ThemeToggle";
+import { SettingsButton } from "./Settings";
+import { Minimap } from "./Minimap";
+import { ResizeHandles } from "./ResizeHandles";
+import { useSettings, SCALE } from "@/lib/settings";
+import { objSize } from "@/lib/bounds";
 import { imageFrom, storeImage } from "@/lib/images";
 import { Toolbar } from "./Toolbar";
 import { ShareBar } from "./ShareBar";
@@ -29,6 +35,11 @@ export function Board() {
   const [caret, setCaret] = useState<{ x: number; y: number } | null>(null);
   const surface = useRef<HTMLDivElement>(null);
   const panning = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
+  const marquee = useRef<{ x: number; y: number } | null>(null);
+  const [band, setBand] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [space, setSpace] = useState(false);
+  const tool = useSettings((s) => s.tool);
+  const settings = useSettings();
   const dragging = useRef<{ id: string; ox: number; oy: number } | null>(null);
 
   useEffect(() => {
@@ -43,8 +54,8 @@ export function Board() {
   // paste or drop an image anywhere on the board
   useEffect(() => {
     const centre = () => ({
-      x: (window.innerWidth / 2 - pan.x) / zoom,
-      y: (window.innerHeight / 2 - pan.y) / zoom,
+      x: (vw() / 2 - pan.x) / zoom,
+      y: (vh() / 2 - pan.y) / zoom,
     });
     const take = async (file: File, at: { x: number; y: number }) => {
       const { key, w, h } = await storeImage(file);
@@ -81,18 +92,34 @@ export function Board() {
       }
       if ((e.key === "Backspace" || e.key === "Delete") && selection.length && !caret) {
         e.preventDefault();
+        if (settings.confirmDelete && !confirm(`Delete ${selection.length} object(s)?`)) return;
         selection.forEach(remove);
       }
+      if (e.key === "v" && !caret) useSettings.getState().setTool("select");
+      if (e.key === "h" && !caret) useSettings.getState().setTool("move");
+      if (e.code === "Space" && !caret) setSpace(true);
     };
+    const onUp = (e: KeyboardEvent) => e.code === "Space" && setSpace(false);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [selection, caret, remove, select]);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onUp);
+    };
+  }, [selection, caret, remove, select, settings.confirmDelete]);
 
   function onSurfaceDown(e: React.PointerEvent) {
-    if (e.target !== e.currentTarget && !(e.target as Element).closest?.("[data-surface]")) return;
+    // Chrome (toolbar, panels, minimap) stops propagation itself; anything that
+    // reaches here is genuinely the empty canvas.
+    if (e.target !== e.currentTarget) return;
     select(null);
     setCaret(null);
-    panning.current = { px: e.clientX, py: e.clientY, ox: pan.x, oy: pan.y };
+    if (tool === "move" || space || e.button === 1) {
+      panning.current = { px: e.clientX, py: e.clientY, ox: pan.x, oy: pan.y };
+    } else {
+      marquee.current = toWorld(e.clientX, e.clientY);
+      setBand({ ...marquee.current, w: 0, h: 0 });
+    }
   }
 
   function onMove(e: React.PointerEvent) {
@@ -101,9 +128,18 @@ export function Board() {
     if (panning.current) {
       const p = panning.current;
       setView({ x: p.ox + (e.clientX - p.px), y: p.oy + (e.clientY - p.py) }, zoom);
+    } else if (marquee.current) {
+      const a = marquee.current;
+      setBand({
+        x: Math.min(a.x, w.x), y: Math.min(a.y, w.y),
+        w: Math.abs(w.x - a.x), h: Math.abs(w.y - a.y),
+      });
     } else if (dragging.current) {
       const d = dragging.current;
-      move(d.id, w.x - d.ox, w.y - d.oy);
+      const g = settings.snap ? settings.gridSize : 0;
+      const nx = w.x - d.ox;
+      const ny = w.y - d.oy;
+      move(d.id, g ? Math.round(nx / g) * g : nx, g ? Math.round(ny / g) * g : ny);
     }
   }
 
@@ -113,7 +149,25 @@ export function Board() {
       const p = panning.current;
       const still = Math.abs(e.clientX - p.px) < 3 && Math.abs(e.clientY - p.py) < 3;
       panning.current = null;
-      if (still) setCaret(toWorld(e.clientX, e.clientY));
+      if (still && settings.clickToType) setCaret(toWorld(e.clientX, e.clientY));
+    }
+    if (marquee.current) {
+      const a = marquee.current;
+      const b = toWorld(e.clientX, e.clientY);
+      marquee.current = null;
+      setBand(null);
+      const tiny = Math.abs(b.x - a.x) < 4 && Math.abs(b.y - a.y) < 4;
+      if (tiny) {
+        if (settings.clickToType) setCaret(b);
+      } else {
+        const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x);
+        const y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+        const hit = objs.filter((o) => {
+          const sz = objSize(o);
+          return o.x < x1 && o.x + sz.w > x0 && o.y < y1 && o.y + sz.h > y0;
+        });
+        useBoard.setState({ selection: hit.map((o) => o.id) });
+      }
     }
     dragging.current = null;
   }
@@ -161,9 +215,16 @@ export function Board() {
       onWheel={onWheel}
       className="relative h-screen w-screen overflow-hidden bg-[var(--bg)]"
       style={{
-        backgroundImage: "radial-gradient(var(--dot) 1px, transparent 1px)",
-        backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
+        backgroundImage:
+          settings.grid === "dots"
+            ? "radial-gradient(var(--dot) 1px, transparent 1px)"
+            : settings.grid === "lines"
+              ? "linear-gradient(var(--dot) 1px, transparent 1px), linear-gradient(90deg, var(--dot) 1px, transparent 1px)"
+              : "none",
+        backgroundSize: `${settings.gridSize * zoom}px ${settings.gridSize * zoom}px`,
         backgroundPosition: `${pan.x}px ${pan.y}px`,
+        cursor: tool === "move" || space ? "grab" : "default",
+        fontSize: `${SCALE[settings.uiScale] * 100}%`,
       }}
     >
       <div
@@ -175,7 +236,7 @@ export function Board() {
             key={o.id}
             className={`group absolute w-max rounded-[5px] p-1.5 ${
               selection.includes(o.id)
-                ? "ring-1 ring-[var(--accent)]/60"
+                ? "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--bg)]"
                 : "hover:ring-1 hover:ring-[var(--border-strong)]"
             }`}
             style={{ left: o.x, top: o.y }}
@@ -203,16 +264,29 @@ export function Board() {
               <span className="text-[9px] tracking-[0.2em]">⋯</span>
             </button>
             {render(o)}
+            {selection.length === 1 && selection[0] === o.id && "w" in o && "h" in o && (
+              <ResizeHandles o={o as Extract<Obj, { w: number; h: number }>} />
+            )}
           </div>
         ))}
+
+        {band && (
+          <div
+            className="pointer-events-none absolute z-30 rounded-[2px] border border-[var(--accent)] bg-[var(--accent-wash)]"
+            style={{ left: band.x, top: band.y, width: band.w, height: band.h }}
+          />
+        )}
 
         {caret && <CommandInput at={caret} onDone={() => setCaret(null)} />}
         <Cursors />
       </div>
 
-      <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+      <div
+        className="absolute top-4 right-4 z-40 flex items-center gap-2"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         <ShareBar />
-        <ThemeToggle />
+        <SettingsButton />
       </div>
 
       <Toolbar onText={(at) => { select(null); setCaret(at); }} />
@@ -234,6 +308,7 @@ export function Board() {
       )}
 
       <EngineBadge />
+      {settings.showMinimap && <Minimap />}
       <Help />
     </div>
   );

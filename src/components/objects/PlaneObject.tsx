@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { compile } from "mathjs";
 import { useBoard } from "@/lib/store";
 import { useTheme, token } from "@/lib/theme";
+import { useSettings } from "@/lib/settings";
 import { niceStep, tickLabel, rhs, paramsIn } from "@/lib/axes";
 import type { PlaneObj } from "@/lib/types";
 
@@ -12,7 +13,9 @@ export const CURVE_INK = ["#2383e2", "#d9730d", "#0f7b6c", "#9065b0", "#d44c47",
 /** A Cartesian plane: pan by dragging inside it, zoom with the wheel. */
 export function PlaneObject({ o }: { o: PlaneObj }) {
   const update = useBoard((s) => s.update);
+  const select = useBoard((s) => s.select);
   const theme = useTheme((s) => s.theme);
+  const angleUnit = useSettings((s) => s.angleUnit);
   const canvas = useRef<HTMLCanvasElement>(null);
   const drag = useRef<{ x: number; y: number; cx: number; cy: number } | null>(null);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
@@ -90,16 +93,24 @@ export function PlaneObject({ o }: { o: PlaneObj }) {
     }
 
     // Unset parameters default to 1 rather than making the curve vanish.
-    const scope: Record<string, number> = { ...o.params };
+    const scope: Record<string, unknown> = { ...o.params };
     for (const k of paramsIn(o.curves.map((c) => c.expr))) scope[k] ??= 1;
+    if (angleUnit === "deg") {
+      const d = Math.PI / 180;
+      Object.assign(scope, {
+        sin: (t: number) => Math.sin(t * d),
+        cos: (t: number) => Math.cos(t * d),
+        tan: (t: number) => Math.tan(t * d),
+      });
+    }
 
     // curves — one sample per pixel column, with breaks at poles
     o.curves.forEach((cv, i) => {
       if (!cv.on) return;
-      let f: (s: Record<string, number>) => number;
+      let f: (s: Record<string, unknown>) => number;
       try {
         const compiled = compile(rhs(cv.expr));
-        f = (s) => compiled.evaluate(s) as number;
+        f = (s) => compiled.evaluate(s as Record<string, unknown>) as number;
       } catch {
         return;
       }
@@ -129,7 +140,7 @@ export function PlaneObject({ o }: { o: PlaneObj }) {
       }
       g.stroke();
     });
-  }, [o, theme]);
+  }, [o, theme, angleUnit]);
 
   const toUnits = (e: React.PointerEvent | React.MouseEvent) => {
     const r = canvas.current!.getBoundingClientRect();
@@ -141,12 +152,13 @@ export function PlaneObject({ o }: { o: PlaneObj }) {
   };
 
   return (
-    <div className="select-none" onPointerDown={(e) => e.stopPropagation()}>
+    <div className="select-none">
       <canvas
         ref={canvas}
         style={{ width: o.w, height: o.h }}
         className="cursor-crosshair rounded-[4px] border border-[var(--border)]"
         onPointerDown={(e) => {
+          select(o.id, e.shiftKey);
           (e.target as Element).setPointerCapture(e.pointerId);
           drag.current = { x: e.clientX, y: e.clientY, cx: o.cx, cy: o.cy };
         }}

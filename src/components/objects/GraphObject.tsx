@@ -11,6 +11,7 @@ const SIZE = GRAPH_R * 2 + PAD * 2;
 export function GraphObject({ o }: { o: GraphObj }) {
   const update = useBoard((s) => s.update);
   const zoom = useBoard((s) => s.zoom);
+  const select = useBoard((s) => s.select);
   const [pending, setPending] = useState<string | null>(null); // first click of an edge
   const drag = useRef<{ id: string; ox: number; oy: number } | null>(null);
   const moved = useRef(false);
@@ -19,6 +20,7 @@ export function GraphObject({ o }: { o: GraphObj }) {
 
   function onNodeDown(e: React.PointerEvent, id: string) {
     e.stopPropagation();
+    select(o.id);
     const n = byId[id];
     moved.current = false;
     drag.current = { id, ox: e.clientX / zoom - n.x, oy: e.clientY / zoom - n.y };

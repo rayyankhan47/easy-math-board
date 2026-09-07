@@ -1,10 +1,13 @@
 "use client";
 
+import { vh, vw } from "@/lib/viewport";
+
 import { useRef, useState } from "react";
 import { useBoard } from "@/lib/store";
 import { parse } from "@/lib/commands";
 import { storeImage } from "@/lib/images";
 import type { Spec } from "@/lib/types";
+import { useSettings } from "@/lib/settings";
 
 /* Hand-drawn 16px glyphs — no icon dependency, and they inherit the theme. */
 const S = { fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -92,14 +95,16 @@ export function Toolbar({ onText }: { onText: (at: { x: number; y: number }) => 
   const pan = useBoard((s) => s.pan);
   const zoom = useBoard((s) => s.zoom);
   const file = useRef<HTMLInputElement>(null);
+  const tool = useSettings((s) => s.tool);
+  const setTool = useSettings((s) => s.setTool);
 
   /**
    * Drop new objects left of centre so the properties panel doesn't cover them,
    * cascading down-right past anything already sitting there.
    */
   const where = () => {
-    let x = (window.innerWidth * 0.42 - pan.x) / zoom;
-    let y = (window.innerHeight * 0.32 - pan.y) / zoom;
+    let x = (vw() * 0.42 - pan.x) / zoom;
+    let y = (vh() * 0.32 - pan.y) / zoom;
     const taken = useBoard.getState().objs;
     for (let i = 0; i < 40; i++) {
       const clash = taken.some((o) => Math.abs(o.x - x) < 60 && Math.abs(o.y - y) < 60);
@@ -123,6 +128,39 @@ export function Toolbar({ onText }: { onText: (at: { x: number; y: number }) => 
         style={{ boxShadow: "var(--shadow)" }}
         onPointerDown={(e) => e.stopPropagation()}
       >
+        <Tip name="Select" hint="drag a box to pick several — V">
+          <button
+            onClick={() => setTool("select")}
+            aria-label="Select"
+            className={`flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors ${
+              tool === "select"
+                ? "bg-[var(--accent-wash)] text-[var(--accent)]"
+                : "text-[var(--text-dim)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
+            }`}
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
+              <path d="M3 2l4.5 11 1.8-4.7L14 6.5z" />
+            </svg>
+          </button>
+        </Tip>
+        <Tip name="Move" hint="drag to pan the board — H, or hold space">
+          <button
+            onClick={() => setTool("move")}
+            aria-label="Move"
+            className={`flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors ${
+              tool === "move"
+                ? "bg-[var(--accent-wash)] text-[var(--accent)]"
+                : "text-[var(--text-dim)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
+            }`}
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" {...S}>
+              <path d="M8 1.5v13M1.5 8h13M8 1.5 6 3.5M8 1.5l2 2M8 14.5l-2-2M8 14.5l2-2M1.5 8l2-2M1.5 8l2 2M14.5 8l-2-2M14.5 8l-2 2" />
+            </svg>
+          </button>
+        </Tip>
+
+        <div className="my-1 h-px bg-[var(--border)]" />
+
         {TOOLS.map((t) => (
           <Tip key={t.id} name={t.name} hint={t.hint}>
             <button
@@ -156,9 +194,11 @@ export function Toolbar({ onText }: { onText: (at: { x: number; y: number }) => 
 /** Appears after a beat of hovering, the way a real toolbar does. */
 function Tip({ name, hint, children }: { name: string; hint: string; children: React.ReactNode }) {
   const [show, setShow] = useState(false);
+  const enabled = useSettings((s) => s.showTooltips);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const enter = () => {
+    if (!enabled) return;
     timer.current = setTimeout(() => setShow(true), 700);
   };
   const leave = () => {

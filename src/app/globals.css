@@ -3,7 +3,7 @@
 /* Notion-ish: warm neutrals, soft borders, generous radii, one blue accent. */
 :root {
   --bg: #ffffff;
-  --dot: #ebebea;
+  --dot: #cfcfcb;
   --panel: #ffffff;
   --panel-solid: #ffffff;
   --inset: #fbfbfa;
@@ -100,4 +100,21 @@ body {
   border: 3px solid transparent;
   background-clip: content-box;
   border-radius: 6px;
+}
+
+/* Settings → Accessibility → Reduce motion */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
 }

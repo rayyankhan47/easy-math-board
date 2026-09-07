@@ -5,6 +5,7 @@ import type { MatrixObj } from "@/lib/types";
 
 export function MatrixObject({ o }: { o: MatrixObj }) {
   const update = useBoard((s) => s.update);
+  const select = useBoard((s) => s.select);
   const cols = o.cells[0]?.length ?? 0;
 
   const setCell = (r: number, c: number, v: string) =>
@@ -18,7 +19,7 @@ export function MatrixObject({ o }: { o: MatrixObj }) {
       value={v}
       onChange={(e) => setCell(r, c, e.target.value)}
       onKeyDown={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => { e.stopPropagation(); select(o.id); }}
       className="w-[3.5ch] rounded-[3px] bg-transparent px-1 py-0.5 text-center font-mono text-[13px] text-[var(--text)] outline-none focus:bg-[var(--border)]"
     />
   );

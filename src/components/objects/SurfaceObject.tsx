@@ -13,6 +13,7 @@ interface P3 { x: number; y: number; z: number }
 
 export function SurfaceObject({ o }: { o: SurfaceObj }) {
   const update = useBoard((s) => s.update);
+  const select = useBoard((s) => s.select);
   const theme = useTheme((s) => s.theme);
   const canvas = useRef<HTMLCanvasElement>(null);
   const drag = useRef<{ x: number; y: number; yaw: number; pitch: number } | null>(null);
@@ -120,12 +121,13 @@ export function SurfaceObject({ o }: { o: SurfaceObj }) {
   }, [o, pts, zLo, zHi, theme]);
 
   return (
-    <div className="select-none" onPointerDown={(e) => e.stopPropagation()}>
+    <div className="select-none">
       <canvas
         ref={canvas}
         style={{ width: o.w, height: o.h }}
         className="cursor-grab rounded-[4px] border border-[var(--border)] active:cursor-grabbing"
         onPointerDown={(e) => {
+          select(o.id, e.shiftKey);
           (e.target as Element).setPointerCapture(e.pointerId);
           drag.current = { x: e.clientX, y: e.clientY, yaw: o.yaw, pitch: o.pitch };
         }}
