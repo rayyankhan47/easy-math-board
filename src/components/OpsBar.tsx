@@ -18,8 +18,8 @@ const Btn = ({
     onClick={onClick}
     className={`rounded-[3px] border px-2 py-1 font-mono text-[11px] transition-colors ${
       tone === "accent"
-        ? "border-[#5b8def]/40 text-[#9dc0ff] hover:border-[#5b8def] hover:bg-[#5b8def]/10"
-        : "border-[#2b2e35] text-[#8a8f98] hover:border-[#3a3d44] hover:text-[#e6e6e6]"
+        ? "border-[var(--accent)]/40 text-[var(--accent-soft)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/10"
+        : "border-[var(--border-strong)] text-[var(--text-dim)] hover:border-[var(--text-ghost)] hover:text-[var(--text)]"
     }`}
   >
     {children}
@@ -45,7 +45,8 @@ export function OpsBar() {
     () =>
       selection
         .map((id) => objs.find((o) => o.id === id))
-        .filter((o): o is TextObj => !!o && o.kind === "text" && !!o.raw.trim()),
+        // Only maths can be manipulated; notes are left alone.
+        .filter((o): o is TextObj => !!o && o.kind === "text" && !!o.latex && !!o.raw.trim()),
     [selection, objs],
   );
 
@@ -101,8 +102,8 @@ export function OpsBar() {
 
   return (
     <div className="absolute bottom-5 left-1/2 z-40 -translate-x-1/2">
-      <div className="flex max-w-[92vw] flex-wrap items-center gap-1.5 rounded-[7px] border border-[#22242a] bg-[#141518]/96 px-2.5 py-2 backdrop-blur">
-        <span className="pr-1 font-mono text-[10px] text-[#4a4e57]">
+      <div className="flex max-w-[92vw] flex-wrap items-center gap-1.5 rounded-[7px] border border-[var(--border)] bg-[var(--panel)]/96 px-2.5 py-2 backdrop-blur">
+        <span className="pr-1 font-mono text-[10px] text-[var(--text-faint)]">
           {picked.length === 1 ? "1 selected" : `${picked.length} selected`}
         </span>
 
@@ -133,18 +134,18 @@ export function OpsBar() {
         )}
 
         {picked.length > 2 && (
-          <span className="font-mono text-[10px] text-[#4a4e57]">select one or two lines</span>
+          <span className="font-mono text-[10px] text-[var(--text-faint)]">select one or two lines</span>
         )}
 
         {(busy || booting) && (
-          <span className="pl-1 font-mono text-[10px] text-[#5b8def]">
+          <span className="pl-1 font-mono text-[10px] text-[var(--accent)]">
             {booting ? detail : "···"}
           </span>
         )}
       </div>
 
       {err && (
-        <div className="mt-1.5 rounded-[4px] border border-[#e06c6c]/25 bg-[#e06c6c]/8 px-2.5 py-1 font-mono text-[10px] text-[#e06c6c]">
+        <div className="mt-1.5 rounded-[4px] border border-[var(--danger)]/25 bg-[var(--danger)]/8 px-2.5 py-1 font-mono text-[10px] text-[var(--danger)]">
           {err}
         </div>
       )}
@@ -152,7 +153,7 @@ export function OpsBar() {
   );
 }
 
-const Sep = () => <span className="mx-0.5 h-4 w-px bg-[#22242a]" />;
+const Sep = () => <span className="mx-0.5 h-4 w-px bg-[var(--border)]" />;
 
 function VarOps({
   label,
@@ -168,7 +169,7 @@ function VarOps({
   if (!vars.length) return null;
   return (
     <span className="flex items-center gap-1">
-      <span className="font-mono text-[10px] text-[#4a4e57]">{label}</span>
+      <span className="font-mono text-[10px] text-[var(--text-faint)]">{label}</span>
       {vars.slice(0, 5).map((v) => (
         <Btn key={v} tone={accent ? "accent" : "plain"} onClick={() => onPick(v)}>
           {v}

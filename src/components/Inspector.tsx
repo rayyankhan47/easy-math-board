@@ -7,19 +7,25 @@ import { checkGroup } from "@/lib/group";
 import { rule, numberFacts } from "@/lib/predicates";
 import { ops, useEngine } from "@/lib/engine";
 import { useEffect, useState } from "react";
-import type { ClockObj, GraphObj, MatrixObj, PlotObj, StripObj } from "@/lib/types";
+import { DEFAULT_STYLE, uid } from "@/lib/types";
+import type {
+  ClockObj, GraphObj, ImageObj, MatrixObj, PlaneObj, PlotObj, StripObj,
+  SurfaceObj, TextObj, FontFamily,
+} from "@/lib/types";
+import { CURVE_INK } from "./objects/PlaneObject";
+import { paramsIn } from "@/lib/axes";
 
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => (
   <div className="flex items-baseline justify-between gap-4 py-[3px]">
-    <span className="text-[11px] text-[#6b707a]">{k}</span>
-    <span className="font-mono text-[12px] text-[#e6e6e6]">{v}</span>
+    <span className="text-[11px] text-[var(--text-dim2)]">{k}</span>
+    <span className="font-mono text-[12px] text-[var(--text)]">{v}</span>
   </div>
 );
 
 const Btn = ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="rounded-[3px] border border-[#2b2e35] px-2 py-1 text-[11px] text-[#8a8f98] transition-colors hover:border-[#3a3d44] hover:text-[#e6e6e6]"
+    className="rounded-[3px] border border-[var(--border-strong)] px-2 py-1 text-[11px] text-[var(--text-dim)] transition-colors hover:border-[var(--text-ghost)] hover:text-[var(--text)]"
   >
     {children}
   </button>
@@ -32,25 +38,22 @@ export function Inspector() {
   if (!one || !obj) return null;
 
   return (
-    <aside className="absolute top-4 right-4 z-30 w-60 rounded-[6px] border border-[#22242a] bg-[#141518]/95 p-3 backdrop-blur">
+    <aside className="absolute top-4 right-4 z-30 w-60 rounded-[6px] border border-[var(--border)] bg-[var(--panel)]/95 p-3 backdrop-blur">
       {obj.kind === "graph" && <GraphPanel o={obj} update={update} />}
       {obj.kind === "matrix" && <MatrixPanel o={obj} update={update} />}
       {obj.kind === "plot" && <PlotPanel o={obj} update={update} />}
       {obj.kind === "strip" && <StripPanel o={obj} update={update} />}
       {obj.kind === "clock" && <ClockPanel o={obj} update={update} />}
-      {obj.kind === "text" && (
-        <>
-          <Head t="text" />
-          <Row k="renders as" v={obj.latex ? "math" : "note"} />
-          <p className="mt-2 font-mono text-[11px] break-words text-[#4a4e57]">{obj.raw}</p>
-        </>
-      )}
+      {obj.kind === "plane" && <PlanePanel o={obj} update={update} />}
+      {obj.kind === "surface" && <SurfacePanel o={obj} update={update} />}
+      {obj.kind === "image" && <ImagePanel o={obj} update={update} />}
+      {obj.kind === "text" && <TextPanel o={obj} update={update} />}
     </aside>
   );
 }
 
 const Head = ({ t }: { t: string }) => (
-  <div className="mb-2 border-b border-[#22242a] pb-2 text-[10px] tracking-[0.14em] text-[#4a4e57] uppercase">
+  <div className="mb-2 border-b border-[var(--border)] pb-2 text-[10px] tracking-[0.14em] text-[var(--text-faint)] uppercase">
     {t}
   </div>
 );
@@ -95,20 +98,20 @@ function GraphPanel({ o, update }: { o: GraphObj; update: ReturnType<typeof useB
       <Row k="components" v={components(o.nodes, o.edges)} />
       <Row k="bipartite" v={parts ? `yes (${parts[0].length}+${parts[1].length})` : "no"} />
       <Row k="χ" v={chi ?? "—"} />
-      <div className="my-2 border-t border-[#22242a]" />
+      <div className="my-2 border-t border-[var(--border)]" />
       <Row k="3V−6" v={V >= 3 ? bound : "—"} />
       <Row
         k="planar"
         v={
           deep?.planar !== undefined ? (
-            <span className={deep.planar ? "text-[#6cc7a1]" : "text-[#e06c6c]"}>
+            <span className={deep.planar ? "text-[var(--ok)]" : "text-[var(--danger)]"}>
               {deep.planar ? "yes" : "no"}
               {!deep.planar && violatesEuler ? " · E > 3V−6" : ""}
             </span>
           ) : violatesEuler ? (
-            <span className="text-[#e06c6c]">no · E &gt; 3V−6</span>
+            <span className="text-[var(--danger)]">no · E &gt; 3V−6</span>
           ) : (
-            <span className="text-[#4a4e57]">…</span>
+            <span className="text-[var(--text-faint)]">…</span>
           )
         }
       />
@@ -127,7 +130,7 @@ function GraphPanel({ o, update }: { o: GraphObj; update: ReturnType<typeof useB
         </Btn>
         <Btn onClick={() => update<GraphObj>(o.id, { edges: [] })}>clear edges</Btn>
       </div>
-      <p className="mt-2 text-[10px] leading-relaxed text-[#3a3d44]">
+      <p className="mt-2 text-[10px] leading-relaxed text-[var(--text-ghost)]">
         drag a vertex to move · click two to toggle an edge
       </p>
     </>
@@ -151,7 +154,7 @@ function MatrixPanel({ o, update }: { o: MatrixObj; update: ReturnType<typeof us
   if (o.headers) {
     const g = checkGroup(o.headers, o.cells);
     const yn = (b: boolean) => (
-      <span className={b ? "text-[#6cc7a1]" : "text-[#e06c6c]"}>{b ? "yes" : "no"}</span>
+      <span className={b ? "text-[var(--ok)]" : "text-[var(--danger)]"}>{b ? "yes" : "no"}</span>
     );
     return (
       <>
@@ -159,13 +162,13 @@ function MatrixPanel({ o, update }: { o: MatrixObj; update: ReturnType<typeof us
         <Row k="order" v={rows} />
         <Row k="closed" v={yn(g.closed)} />
         <Row k="associative" v={yn(g.associative)} />
-        <Row k="identity" v={g.identity ?? <span className="text-[#e06c6c]">none</span>} />
+        <Row k="identity" v={g.identity ?? <span className="text-[var(--danger)]">none</span>} />
         <Row k="inverses" v={yn(g.allInverses)} />
         <Row k="commutative" v={yn(g.commutative)} />
-        <div className="my-2 border-t border-[#22242a]" />
+        <div className="my-2 border-t border-[var(--border)]" />
         <Row k="group" v={yn(g.isGroup)} />
         {g.isGroup && <Row k="abelian" v={yn(g.commutative)} />}
-        <p className="mt-2 text-[10px] leading-relaxed text-[#3a3d44]">
+        <p className="mt-2 text-[10px] leading-relaxed text-[var(--text-ghost)]">
           edit any cell — the checks rerun
         </p>
       </>
@@ -183,7 +186,7 @@ function MatrixPanel({ o, update }: { o: MatrixObj; update: ReturnType<typeof us
           <Row k="trace" v={rows === cols ? tidy(trace(m) ?? 0) : "—"} />
         </>
       ) : (
-        <Row k="entries" v={<span className="text-[#6b707a]">symbolic</span>} />
+        <Row k="entries" v={<span className="text-[var(--text-dim2)]">symbolic</span>} />
       )}
       <div className="mt-3 flex flex-wrap gap-1.5">
         <Btn onClick={() => resize(rows + 1, cols)}>+ row</Btn>
@@ -318,3 +321,250 @@ function useGraphProps(o: GraphObj) {
     clique?: number; eulerian?: boolean;
   };
 }
+
+
+/* ------------------------------------------------------------------ text */
+
+const FONTS: { id: FontFamily; label: string }[] = [
+  { id: "sans", label: "Sans" },
+  { id: "serif", label: "Serif" },
+  { id: "mono", label: "Mono" },
+];
+
+const INK = [
+  { name: "default", value: null },
+  { name: "grey", value: "#787774" },
+  { name: "brown", value: "#9f6b53" },
+  { name: "orange", value: "#d9730d" },
+  { name: "yellow", value: "#cb912f" },
+  { name: "green", value: "#0f7b6c" },
+  { name: "blue", value: "#2383e2" },
+  { name: "purple", value: "#9065b0" },
+  { name: "pink", value: "#c14c8a" },
+  { name: "red", value: "#d44c47" },
+];
+
+function TextPanel({ o, update }: { o: TextObj; update: Update }) {
+  const st = o.style ?? DEFAULT_STYLE;
+  const patch = (p: Partial<typeof st>) => update<TextObj>(o.id, { style: { ...st, ...p } });
+
+  return (
+    <>
+      <Head t="text" />
+      <Row k="renders as" v={o.latex ? "maths" : "note"} />
+
+      <Label>font</Label>
+      <div className="flex gap-1">
+        {FONTS.map((f) => (
+          <Toggle key={f.id} on={st.font === f.id} onClick={() => patch({ font: f.id })}>
+            {f.label}
+          </Toggle>
+        ))}
+      </div>
+
+      <Label>size</Label>
+      <div className="flex items-center gap-2">
+        <input
+          type="range" min={11} max={56} value={st.size}
+          onChange={(e) => patch({ size: +e.target.value })}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="h-1 flex-1 accent-[var(--accent)]"
+        />
+        <span className="w-7 text-right font-mono text-[11px] text-[var(--text-dim)]">{st.size}</span>
+      </div>
+
+      <Label>style</Label>
+      <div className="flex gap-1">
+        <Toggle on={st.bold} onClick={() => patch({ bold: !st.bold })}>
+          <span className="font-semibold">B</span>
+        </Toggle>
+        <Toggle on={st.italic} onClick={() => patch({ italic: !st.italic })}>
+          <span className="italic">I</span>
+        </Toggle>
+      </div>
+
+      <Label>colour</Label>
+      <div className="flex flex-wrap gap-1.5">
+        {INK.map((c) => (
+          <button
+            key={c.name}
+            title={c.name}
+            onClick={() => patch({ color: c.value })}
+            className={`h-5 w-5 rounded-full border transition-transform hover:scale-110 ${
+              st.color === c.value ? "border-[var(--accent)] ring-2 ring-[var(--accent-wash)]" : "border-[var(--border-strong)]"
+            }`}
+            style={{ background: c.value ?? "var(--text)" }}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ----------------------------------------------------------------- plane */
+
+function PlanePanel({ o, update }: { o: PlaneObj; update: Update }) {
+  const setCurve = (id: string, p: Partial<PlaneObj["curves"][number]>) =>
+    update<PlaneObj>(o.id, { curves: o.curves.map((c) => (c.id === id ? { ...c, ...p } : c)) });
+
+  const addCurve = () =>
+    update<PlaneObj>(o.id, {
+      curves: [
+        ...o.curves,
+        { id: uid(), expr: "x", color: CURVE_INK[o.curves.length % CURVE_INK.length], on: true },
+      ],
+    });
+
+  const params = paramsIn(o.curves.map((c) => c.expr));
+
+  return (
+    <>
+      <Head t="plane" />
+      <div className="space-y-1">
+        {o.curves.map((c, i) => (
+          <div key={c.id} className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurve(c.id, { on: !c.on })}
+              className="h-3 w-3 shrink-0 rounded-full border"
+              style={{
+                background: c.on ? c.color || CURVE_INK[i % CURVE_INK.length] : "transparent",
+                borderColor: c.color || CURVE_INK[i % CURVE_INK.length],
+              }}
+              title={c.on ? "hide" : "show"}
+            />
+            <input
+              value={c.expr}
+              onChange={(e) => setCurve(c.id, { expr: e.target.value })}
+              onKeyDown={(e) => e.stopPropagation()}
+              className="min-w-0 flex-1 rounded-[3px] bg-[var(--inset)] px-1.5 py-1 font-mono text-[11px] text-[var(--text)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
+            />
+            <button
+              onClick={() => update<PlaneObj>(o.id, { curves: o.curves.filter((x) => x.id !== c.id) })}
+              className="shrink-0 px-1 text-[11px] text-[var(--text-ghost)] hover:text-[var(--danger)]"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={addCurve}
+        className="mt-1.5 w-full rounded-[4px] border border-dashed border-[var(--border-strong)] py-1 text-[11px] text-[var(--text-faint)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      >
+        + curve
+      </button>
+
+      {params.length > 0 && (
+        <>
+          <Label>parameters</Label>
+          {params.map((k) => (
+            <div key={k} className="mb-1 flex items-center gap-2">
+              <span className="w-3 font-mono text-[11px] text-[var(--text-dim)]">{k}</span>
+              <input
+                type="range" min={-10} max={10} step={0.1}
+                value={o.params[k] ?? 1}
+                onChange={(e) => update<PlaneObj>(o.id, { params: { ...o.params, [k]: +e.target.value } })}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="h-1 flex-1 accent-[var(--accent)]"
+              />
+              <span className="w-8 text-right font-mono text-[10px] tabular-nums text-[var(--text-dim)]">
+                {(o.params[k] ?? 1).toFixed(1)}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
+
+      <Label>view</Label>
+      <div className="flex flex-wrap gap-1.5">
+        <Btn onClick={() => update<PlaneObj>(o.id, { cx: 0, cy: 0, ppu: 34 })}>recentre</Btn>
+        <Btn onClick={() => update<PlaneObj>(o.id, { ppu: o.ppu * 1.5 })}>zoom in</Btn>
+        <Btn onClick={() => update<PlaneObj>(o.id, { ppu: o.ppu / 1.5 })}>zoom out</Btn>
+        <Btn onClick={() => update<PlaneObj>(o.id, { w: o.w + 80, h: o.h + 60 })}>bigger</Btn>
+        <Btn onClick={() => update<PlaneObj>(o.id, { w: Math.max(200, o.w - 80), h: Math.max(160, o.h - 60) })}>
+          smaller
+        </Btn>
+      </div>
+      <p className="mt-2 text-[10px] leading-relaxed text-[var(--text-ghost)]">
+        drag inside to pan · scroll to zoom
+      </p>
+    </>
+  );
+}
+
+/* --------------------------------------------------------------- surface */
+
+function SurfacePanel({ o, update }: { o: SurfaceObj; update: Update }) {
+  return (
+    <>
+      <Head t="3d surface" />
+      <Label>z = f(x, y)</Label>
+      <input
+        value={o.expr}
+        onChange={(e) => update<SurfaceObj>(o.id, { expr: e.target.value })}
+        onKeyDown={(e) => e.stopPropagation()}
+        className="w-full rounded-[3px] bg-[var(--inset)] px-1.5 py-1 font-mono text-[11px] text-[var(--text)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
+      />
+      <div className="mt-2">
+        <Row k="range" v={`±${o.range}`} />
+        <Row k="grid" v={`${o.res} × ${o.res}`} />
+      </div>
+      <Label>detail</Label>
+      <input
+        type="range" min={10} max={54} step={2} value={o.res}
+        onChange={(e) => update<SurfaceObj>(o.id, { res: +e.target.value })}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="h-1 w-full accent-[var(--accent)]"
+      />
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <Btn onClick={() => update<SurfaceObj>(o.id, { wire: !o.wire })}>{o.wire ? "solid" : "wireframe"}</Btn>
+        <Btn onClick={() => update<SurfaceObj>(o.id, { range: o.range * 1.5 })}>wider</Btn>
+        <Btn onClick={() => update<SurfaceObj>(o.id, { range: Math.max(0.5, o.range / 1.5) })}>narrower</Btn>
+        <Btn onClick={() => update<SurfaceObj>(o.id, { yaw: 0.7, pitch: 0.5, zoom: 1 })}>reset view</Btn>
+        <Btn onClick={() => update<SurfaceObj>(o.id, { w: o.w + 80, h: o.h + 60 })}>bigger</Btn>
+        <Btn onClick={() => update<SurfaceObj>(o.id, { w: Math.max(200, o.w - 80), h: Math.max(160, o.h - 60) })}>
+          smaller
+        </Btn>
+      </div>
+    </>
+  );
+}
+
+/* ----------------------------------------------------------------- image */
+
+function ImagePanel({ o, update }: { o: ImageObj; update: Update }) {
+  const scale = (f: number) =>
+    update<ImageObj>(o.id, { w: Math.round(o.w * f), h: Math.round(o.h * f) });
+  return (
+    <>
+      <Head t="image" />
+      <Row k="size" v={`${o.w} × ${o.h}`} />
+      {o.alt && <Row k="name" v={<span className="truncate">{o.alt}</span>} />}
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <Btn onClick={() => scale(1.25)}>bigger</Btn>
+        <Btn onClick={() => scale(0.8)}>smaller</Btn>
+      </div>
+    </>
+  );
+}
+
+/* ---------------------------------------------------------------- shared */
+
+const Label = ({ children }: { children: React.ReactNode }) => (
+  <div className="mt-3 mb-1.5 text-[10px] tracking-wide text-[var(--text-faint)]">{children}</div>
+);
+
+const Toggle = ({
+  on, onClick, children,
+}: { on: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button
+    onClick={onClick}
+    className={`flex-1 rounded-[4px] border px-2 py-1 text-[11px] transition-colors ${
+      on
+        ? "border-[var(--accent)] bg-[var(--accent-wash)] text-[var(--accent)]"
+        : "border-[var(--border)] text-[var(--text-dim)] hover:border-[var(--border-strong)]"
+    }`}
+  >
+    {children}
+  </button>
+);

@@ -9,13 +9,13 @@ export function Tex({ tex, display = false }: { tex: string; display?: boolean }
       return katex.renderToString(tex, {
         displayMode: display,
         throwOnError: false,
-        errorColor: "#8a8f98",
+        errorColor: "var(--text-dim)",
       });
     } catch {
       return null;
     }
   }, [tex, display]);
 
-  if (!html) return <span className="text-[#8a8f98]">{tex}</span>;
+  if (!html) return <span className="text-[var(--text-dim)]">{tex}</span>;
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }

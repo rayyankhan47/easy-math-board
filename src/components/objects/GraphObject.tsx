@@ -71,7 +71,7 @@ export function GraphObject({ o }: { o: GraphObj }) {
             <line
               key={i}
               x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              stroke="#4a4e57"
+              stroke="var(--text-faint)"
               strokeWidth={1.25}
             />
           );
@@ -87,14 +87,14 @@ export function GraphObject({ o }: { o: GraphObj }) {
             >
               <circle
                 cx={n.x} cy={n.y} r={7.5}
-                fill={on ? "#5b8def" : "#15161a"}
-                stroke={on ? "#5b8def" : "#6b707a"}
+                fill={on ? "var(--accent)" : "var(--inset)"}
+                stroke={on ? "var(--accent)" : "var(--text-dim2)"}
                 strokeWidth={1.5}
               />
               <text
                 x={n.x} y={n.y - 13}
                 textAnchor="middle"
-                className="pointer-events-none fill-[#6b707a] font-mono text-[10px]"
+                className="pointer-events-none fill-[var(--text-dim2)] font-mono text-[10px]"
               >
                 {n.label}
               </text>

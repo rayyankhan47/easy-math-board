@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="overscroll-none bg-[#0e0f11] antialiased">{children}</body>
+      <body className="overscroll-none bg-[var(--bg)] antialiased">{children}</body>
     </html>
   );
 }

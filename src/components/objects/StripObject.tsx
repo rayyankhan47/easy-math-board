@@ -23,8 +23,8 @@ export function StripObject({ o }: { o: StripObj }) {
             key={c.n}
             className={`w-[26px] rounded-[2px] py-[3px] text-center font-mono text-[10px] ${
               c.on
-                ? "bg-[#5b8def]/22 text-[#9dc0ff]"
-                : "text-[#4a4e57]"
+                ? "bg-[var(--accent)]/22 text-[var(--accent-soft)]"
+                : "text-[var(--text-faint)]"
             }`}
           >
             {c.n}
@@ -32,7 +32,7 @@ export function StripObject({ o }: { o: StripObj }) {
         ))}
       </div>
       {o.rule && (
-        <div className="mt-1.5 font-mono text-[10px] text-[#6b707a]">
+        <div className="mt-1.5 font-mono text-[10px] text-[var(--text-dim2)]">
           {label} · {hits} of {cells.length}
         </div>
       )}

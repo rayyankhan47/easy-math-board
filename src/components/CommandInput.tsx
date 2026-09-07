@@ -64,15 +64,15 @@ export function CommandInput({
         }}
         onKeyDown={onKeyDown}
         onBlur={() => setTimeout(onDone, 120)}
-        className="w-[40ch] border-b border-[#3a3d44] bg-transparent pb-1 font-mono text-[15px] text-[#e6e6e6] placeholder:text-[#4a4e57] outline-none focus:border-[#5b8def]"
+        className="w-[40ch] border-b border-[var(--text-ghost)] bg-transparent pb-1 font-mono text-[15px] text-[var(--text)] placeholder:text-[var(--text-faint)] outline-none focus:border-[var(--accent)]"
       />
 
       {preview && (
-        <div className="mt-1 font-mono text-[10px] text-[#4a4e57]">→ {preview}</div>
+        <div className="mt-1 font-mono text-[10px] text-[var(--text-faint)]">→ {preview}</div>
       )}
 
       {hits.length > 0 && (
-        <ul className="mt-1.5 w-[40ch] overflow-hidden rounded-[5px] border border-[#22242a] bg-[#141518]/97 backdrop-blur">
+        <ul className="mt-1.5 w-[40ch] overflow-hidden rounded-[5px] border border-[var(--border)] bg-[var(--panel)]/97 backdrop-blur">
           {hits.map((c, i) => (
             <li
               key={c.id}
@@ -82,18 +82,18 @@ export function CommandInput({
                 commit(c.label);
               }}
               className={`flex cursor-pointer items-baseline justify-between gap-3 px-2.5 py-1.5 ${
-                i === sel ? "bg-[#5b8def]/12" : ""
+                i === sel ? "bg-[var(--accent)]/12" : ""
               }`}
             >
-              <span className="font-mono text-[12px] text-[#e6e6e6]">{c.label}</span>
-              <span className="text-[10px] text-[#4a4e57]">{c.hint}</span>
+              <span className="font-mono text-[12px] text-[var(--text)]">{c.label}</span>
+              <span className="text-[10px] text-[var(--text-faint)]">{c.hint}</span>
             </li>
           ))}
         </ul>
       )}
 
       {hits.length > 0 && (
-        <div className="mt-1 font-mono text-[9px] text-[#2f323a]">↑↓ pick · tab fill · ⏎ create</div>
+        <div className="mt-1 font-mono text-[9px] text-[var(--text-ghost)]">↑↓ pick · tab fill · ⏎ create</div>
       )}
     </div>
   );

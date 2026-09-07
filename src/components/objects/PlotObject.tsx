@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { compile } from "mathjs";
 import type { PlotObj } from "@/lib/types";
 
-const INK = ["#5b8def", "#e0a06c", "#6cc7a1", "#c47ce0"];
+const INK = ["var(--accent)", "#e0a06c", "var(--ok)", "#c47ce0"];
 
 export function PlotObject({ o }: { o: PlotObj }) {
   const { paths, yLo, yHi, zeroY, zeroX } = useMemo(() => {
@@ -76,20 +76,20 @@ export function PlotObject({ o }: { o: PlotObj }) {
   return (
     <div className="select-none">
       <svg width={o.w} height={o.h} className="overflow-visible">
-        <rect width={o.w} height={o.h} fill="#111216" stroke="#22242a" rx={3} />
+        <rect width={o.w} height={o.h} fill="var(--inset)" stroke="var(--border)" rx={3} />
         {zeroY !== null && (
-          <line x1={0} y1={zeroY} x2={o.w} y2={zeroY} stroke="#2b2e35" strokeWidth={1} />
+          <line x1={0} y1={zeroY} x2={o.w} y2={zeroY} stroke="var(--border-strong)" strokeWidth={1} />
         )}
         {zeroX !== null && (
-          <line x1={zeroX} y1={0} x2={zeroX} y2={o.h} stroke="#2b2e35" strokeWidth={1} />
+          <line x1={zeroX} y1={0} x2={zeroX} y2={o.h} stroke="var(--border-strong)" strokeWidth={1} />
         )}
         {paths.map((p) => (
           <path key={p.i} d={p.d} fill="none" stroke={INK[p.i % INK.length]} strokeWidth={1.4} />
         ))}
       </svg>
-      <div className="mt-1 flex justify-between font-mono text-[9px] text-[#4a4e57]">
+      <div className="mt-1 flex justify-between font-mono text-[9px] text-[var(--text-faint)]">
         <span>{o.from}</span>
-        <span className="text-[#6b707a]">
+        <span className="text-[var(--text-dim2)]">
           {o.exprs.join(", ")} · y ∈ [{yLo.toFixed(1)}, {yHi.toFixed(1)}]
         </span>
         <span>{o.to}</span>

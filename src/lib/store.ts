@@ -3,8 +3,10 @@
 import { create } from "zustand";
 import { get as idbGet, set as idbSet } from "idb-keyval";
 import type { Obj, Spec } from "./types";
-import { uid } from "./types";
+import { DEFAULT_STYLE, uid } from "./types";
+import { CURVE_INK } from "@/components/objects/PlaneObject";
 import { bipartiteNodes, circleNodes, gridNodes, pairsToEdges, treeNodes } from "./graphs";
+import { paramsIn } from "./axes";
 
 const KEY = "board.v1";
 
@@ -68,8 +70,27 @@ function specToObj(spec: Spec, at: { x: number; y: number }): Obj {
       };
     case "clock":
       return { ...base, kind: "clock", n: spec.n, step: spec.step ?? 1 };
+    case "plane":
+      return {
+        ...base, kind: "plane",
+        curves: spec.exprs.map((e, i) => ({
+          id: uid(), expr: e, color: CURVE_INK[i % CURVE_INK.length], on: true,
+        })),
+        cx: spec.cx ?? 0, cy: spec.cy ?? 0, ppu: spec.ppu ?? 34,
+        w: 340, h: 280,
+        // parameters start at 1 so a curve using them draws immediately
+        params: Object.fromEntries(paramsIn(spec.exprs).map((k) => [k, 1])),
+      };
+    case "surface":
+      return {
+        ...base, kind: "surface",
+        expr: spec.expr, range: spec.range ?? 3, res: 26,
+        w: 300, h: 250, yaw: 0.7, pitch: 0.5, zoom: 1, wire: false,
+      };
+    case "image":
+      return { ...base, kind: "image", blobKey: spec.blobKey, w: spec.w, h: spec.h, alt: spec.alt ?? "" };
     default:
-      return { ...base, kind: "text", raw: spec.raw, latex: spec.latex };
+      return { ...base, kind: "text", raw: spec.raw, latex: spec.latex, style: { ...DEFAULT_STYLE } };
   }
 }
 

@@ -9,7 +9,7 @@ export function EngineBadge() {
   if (status === "idle") return null;
 
   const tone =
-    status === "ready" ? "text-[#3a3d44]" : status === "failed" ? "text-[#e06c6c]" : "text-[#5b8def]";
+    status === "ready" ? "text-[var(--text-ghost)]" : status === "failed" ? "text-[var(--danger)]" : "text-[var(--accent)]";
 
   return (
     <div className={`absolute bottom-4 left-4 z-30 font-mono text-[10px] ${tone}`}>

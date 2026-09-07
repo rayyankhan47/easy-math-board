@@ -19,7 +19,7 @@ export function MatrixObject({ o }: { o: MatrixObj }) {
       onChange={(e) => setCell(r, c, e.target.value)}
       onKeyDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
-      className="w-[3.5ch] rounded-[3px] bg-transparent px-1 py-0.5 text-center font-mono text-[13px] text-[#e6e6e6] outline-none focus:bg-[#22242a]"
+      className="w-[3.5ch] rounded-[3px] bg-transparent px-1 py-0.5 text-center font-mono text-[13px] text-[var(--text)] outline-none focus:bg-[var(--border)]"
     />
   );
 
@@ -30,11 +30,11 @@ export function MatrixObject({ o }: { o: MatrixObj }) {
         <table className="border-collapse">
           <thead>
             <tr>
-              <th className="border-r border-b border-[#2b2e35] px-1.5 py-0.5 font-mono text-[11px] font-normal text-[#6b707a]">
+              <th className="border-r border-b border-[var(--border-strong)] px-1.5 py-0.5 font-mono text-[11px] font-normal text-[var(--text-dim2)]">
                 +
               </th>
               {o.headers.map((h) => (
-                <th key={h} className="border-b border-[#2b2e35] px-1 py-0.5 font-mono text-[11px] font-normal text-[#6b707a]">
+                <th key={h} className="border-b border-[var(--border-strong)] px-1 py-0.5 font-mono text-[11px] font-normal text-[var(--text-dim2)]">
                   {h}
                 </th>
               ))}
@@ -43,7 +43,7 @@ export function MatrixObject({ o }: { o: MatrixObj }) {
           <tbody>
             {o.cells.map((row, r) => (
               <tr key={r}>
-                <th className="border-r border-[#2b2e35] px-1.5 font-mono text-[11px] font-normal text-[#6b707a]">
+                <th className="border-r border-[var(--border-strong)] px-1.5 font-mono text-[11px] font-normal text-[var(--text-dim2)]">
                   {o.headers![r]}
                 </th>
                 {row.map((v, c) => (
@@ -53,7 +53,7 @@ export function MatrixObject({ o }: { o: MatrixObj }) {
             ))}
           </tbody>
         </table>
-        {o.label && <div className="mt-1 font-mono text-[10px] text-[#4a4e57]">{o.label}</div>}
+        {o.label && <div className="mt-1 font-mono text-[10px] text-[var(--text-faint)]">{o.label}</div>}
       </div>
     );
   }
@@ -61,16 +61,16 @@ export function MatrixObject({ o }: { o: MatrixObj }) {
   return (
     <div className="flex items-stretch gap-1.5 select-none">
       {o.label && (
-        <div className="self-center pr-1 font-mono text-[13px] text-[#8a8f98]">{o.label} =</div>
+        <div className="self-center pr-1 font-mono text-[13px] text-[var(--text-dim)]">{o.label} =</div>
       )}
-      <div className="w-2 rounded-l-[3px] border-y border-l border-[#3a3d44]" />
+      <div className="w-2 rounded-l-[3px] border-y border-l border-[var(--text-ghost)]" />
       <div
         className="grid gap-x-1 gap-y-0.5 py-1"
         style={{ gridTemplateColumns: `repeat(${cols}, auto)` }}
       >
         {o.cells.map((row, r) => row.map((v, c) => cell(v, r, c)))}
       </div>
-      <div className="w-2 rounded-r-[3px] border-y border-r border-[#3a3d44]" />
+      <div className="w-2 rounded-r-[3px] border-y border-r border-[var(--text-ghost)]" />
     </div>
   );
 }

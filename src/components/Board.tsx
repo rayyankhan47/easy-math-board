@@ -13,6 +13,11 @@ import { MatrixObject } from "./objects/MatrixObject";
 import { PlotObject } from "./objects/PlotObject";
 import { StripObject } from "./objects/StripObject";
 import { ClockObject } from "./objects/ClockObject";
+import { PlaneObject } from "./objects/PlaneObject";
+import { SurfaceObject } from "./objects/SurfaceObject";
+import { ImageObject } from "./objects/ImageObject";
+import { ThemeToggle } from "./ThemeToggle";
+import { imageFrom, storeImage } from "@/lib/images";
 import type { Obj } from "@/lib/types";
 
 export function Board() {
@@ -30,6 +35,38 @@ export function Board() {
     const r = surface.current!.getBoundingClientRect();
     return { x: (cx - r.left - pan.x) / zoom, y: (cy - r.top - pan.y) / zoom };
   };
+
+  // paste or drop an image anywhere on the board
+  useEffect(() => {
+    const centre = () => ({
+      x: (window.innerWidth / 2 - pan.x) / zoom,
+      y: (window.innerHeight / 2 - pan.y) / zoom,
+    });
+    const take = async (file: File, at: { x: number; y: number }) => {
+      const { key, w, h } = await storeImage(file);
+      useBoard.getState().add({ kind: "image", blobKey: key, w, h, alt: file.name }, at);
+    };
+    const onPaste = (e: ClipboardEvent) => {
+      const f = imageFrom(e);
+      if (f) { e.preventDefault(); void take(f, centre()); }
+    };
+    const onDrop = (e: DragEvent) => {
+      const f = imageFrom(e);
+      if (!f) return;
+      e.preventDefault();
+      const r = surface.current!.getBoundingClientRect();
+      void take(f, { x: (e.clientX - r.left - pan.x) / zoom, y: (e.clientY - r.top - pan.y) / zoom });
+    };
+    const stop = (e: DragEvent) => e.preventDefault();
+    window.addEventListener("paste", onPaste);
+    window.addEventListener("drop", onDrop);
+    window.addEventListener("dragover", stop);
+    return () => {
+      window.removeEventListener("paste", onPaste);
+      window.removeEventListener("drop", onDrop);
+      window.removeEventListener("dragover", stop);
+    };
+  }, [pan, zoom]);
 
   // delete / escape
   useEffect(() => {
@@ -92,6 +129,9 @@ export function Board() {
     }
   }
 
+  /** These handle their own pointer events inside, so they move by the grip. */
+  const OWNS_INTERIOR = new Set(["plane", "surface", "graph", "matrix"]);
+
   const render = (o: Obj) => {
     switch (o.kind) {
       case "graph": return <GraphObject o={o} />;
@@ -99,6 +139,9 @@ export function Board() {
       case "plot": return <PlotObject o={o} />;
       case "strip": return <StripObject o={o} />;
       case "clock": return <ClockObject o={o} />;
+      case "plane": return <PlaneObject o={o} />;
+      case "surface": return <SurfaceObject o={o} />;
+      case "image": return <ImageObject o={o} />;
       default: return <TextObject o={o} />;
     }
   };
@@ -111,9 +154,9 @@ export function Board() {
       onPointerMove={onMove}
       onPointerUp={onUp}
       onWheel={onWheel}
-      className="relative h-screen w-screen overflow-hidden bg-[#0e0f11]"
+      className="relative h-screen w-screen overflow-hidden bg-[var(--bg)]"
       style={{
-        backgroundImage: "radial-gradient(#1c1e23 1px, transparent 1px)",
+        backgroundImage: "radial-gradient(var(--dot) 1px, transparent 1px)",
         backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
         backgroundPosition: `${pan.x}px ${pan.y}px`,
       }}
@@ -125,20 +168,35 @@ export function Board() {
         {objs.map((o) => (
           <div
             key={o.id}
-            className={`absolute w-max rounded-[4px] p-1.5 ${
+            className={`group absolute w-max rounded-[5px] p-1.5 ${
               selection.includes(o.id)
-                ? "ring-1 ring-[#5b8def]/60"
-                : "hover:ring-1 hover:ring-[#2b2e35]"
+                ? "ring-1 ring-[var(--accent)]/60"
+                : "hover:ring-1 hover:ring-[var(--border-strong)]"
             }`}
             style={{ left: o.x, top: o.y }}
             onPointerDown={(e) => {
               e.stopPropagation();
               select(o.id, e.shiftKey);
               setCaret(null);
+              if (OWNS_INTERIOR.has(o.kind)) return;
               const w = toWorld(e.clientX, e.clientY);
               dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
             }}
           >
+            <button
+              title="drag to move"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                select(o.id, e.shiftKey);
+                const w = toWorld(e.clientX, e.clientY);
+                dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
+              }}
+              className={`absolute -top-1 left-1/2 z-10 -translate-x-1/2 cursor-grab rounded-[3px] px-2 leading-none text-[var(--text-ghost)] transition-opacity hover:text-[var(--text-dim)] active:cursor-grabbing ${
+                selection.includes(o.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              }`}
+            >
+              <span className="text-[9px] tracking-[0.2em]">⋯</span>
+            </button>
             {render(o)}
           </div>
         ))}
@@ -146,18 +204,21 @@ export function Board() {
         {caret && <CommandInput at={caret} onDone={() => setCaret(null)} />}
       </div>
 
+      <div className="absolute top-4 left-4 z-30">
+        <ThemeToggle />
+      </div>
       <Inspector />
       <OpsBar />
 
       {objs.length === 0 && !caret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <p className="font-mono text-[13px] text-[#4a4e57]">click anywhere and start typing</p>
-            <p className="mt-2 font-mono text-[11px] text-[#2f323a]">
-              K5 · matrix 3x3 · plot sin(x)/x · primes to 100 · clock 12 · V - E + F = 2
+            <p className="font-mono text-[13px] text-[var(--text-faint)]">click anywhere and start typing</p>
+            <p className="mt-2 font-mono text-[11px] text-[var(--text-ghost)]">
+              plot sin(x) · surface x^2 - y^2 · matrix 3x3 · primes to 100 · K5
             </p>
-            <p className="mt-4 font-mono text-[10px] text-[#26282e]">
-              shift-click two equations to combine them
+            <p className="mt-4 font-mono text-[10px] text-[var(--text-ghost)]">
+              shift-click two equations to combine them · paste an image anywhere · ? for help
             </p>
           </div>
         </div>

@@ -159,17 +159,24 @@ export const COMMANDS: Command[] = [
     },
   },
 
-  // ----------------------------------------------------------------- plots
+  // ---------------------------------------------------------------- planes
   {
-    id: "plot", label: "plot sin(x)/x", hint: "curve over a range", group: "plot",
-    aliases: ["graph of", "draw", "curve", "function"],
-    match: /^(?:plot|draw|curve)\s+(.+?)(?:\s+from\s+(-?[\d.]+)\s+to\s+(-?[\d.]+))?$/i,
-    build: (m) => ({
-      kind: "plot",
-      exprs: m[1].split(/\s*,\s*/).filter(Boolean),
-      from: m[2] ? parseFloat(m[2]) : -10,
-      to: m[3] ? parseFloat(m[3]) : 10,
-    }),
+    id: "plane", label: "plot sin(x)", hint: "a plane you pan and zoom", group: "plane",
+    aliases: ["graph of", "draw", "curve", "function", "cartesian", "desmos", "axes"],
+    match: /^(?:plot|draw|curve|graph)\s+(?!\d+\s*(?:nodes?|vertices))(.+)$/i,
+    build: (m) => ({ kind: "plane", exprs: m[1].split(/\s*,\s*/).filter(Boolean) }),
+  },
+  {
+    id: "plane-blank", label: "plane", hint: "empty axes, add curves after", group: "plane",
+    aliases: ["cartesian plane", "axes", "grid paper", "coordinate plane"],
+    match: /^(?:plane|axes|cartesian(?:\s+plane)?|coordinate\s+plane)$/i,
+    build: () => ({ kind: "plane", exprs: [] }),
+  },
+  {
+    id: "surface", label: "surface x^2 - y^2", hint: "3d, drag to orbit", group: "plane",
+    aliases: ["3d", "z =", "saddle", "paraboloid", "mesh"],
+    match: /^(?:surface|3d|plot3d)\s+(?:z\s*=\s*)?(.+?)(?:\s+range\s+([\d.]+))?$/i,
+    build: (m) => ({ kind: "surface", expr: m[1].trim(), range: m[2] ? parseFloat(m[2]) : 3 }),
   },
 
   // ---------------------------------------------------------------- strips
@@ -274,8 +281,11 @@ export function describe(spec: Spec): string {
     case "graph": return `graph · ${spec.n} vertices · ${spec.edges.length} edges`;
     case "matrix": return `matrix · ${spec.rows} × ${spec.cols}`;
     case "plot": return `plot · ${spec.exprs.join(", ")}`;
+    case "plane": return spec.exprs.length ? `plane · ${spec.exprs.join(", ")}` : "empty plane";
+    case "surface": return `3d surface · z = ${spec.expr}`;
+    case "image": return "image";
     case "strip": return `numbers ${spec.from ?? 1}–${spec.to}${spec.rule ? ` · ${spec.rule}` : ""}`;
     case "clock": return `Z_${spec.n} dial`;
-    default: return spec.latex ? "maths" : "note";
+    default: return "latex" in spec && spec.latex ? "maths" : "note";
   }
 }

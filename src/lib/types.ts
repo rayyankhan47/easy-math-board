@@ -1,4 +1,6 @@
-export type ObjKind = "text" | "graph" | "matrix" | "plot" | "strip" | "clock";
+export type ObjKind =
+  | "text" | "graph" | "matrix" | "plot" | "strip" | "clock"
+  | "plane" | "surface" | "image";
 
 export interface BaseObj {
   id: string;
@@ -7,11 +9,26 @@ export interface BaseObj {
   y: number;
 }
 
+export type FontFamily = "sans" | "serif" | "mono";
+
+export interface TextStyle {
+  font: FontFamily;
+  size: number;
+  color: string | null;   // null => inherit the theme's ink
+  bold: boolean;
+  italic: boolean;
+}
+
+export const DEFAULT_STYLE: TextStyle = {
+  font: "sans", size: 16, color: null, bold: false, italic: false,
+};
+
 /** Anything you type. Renders as math when it looks like math, prose otherwise. */
 export interface TextObj extends BaseObj {
   kind: "text";
   raw: string;
   latex: string | null; // null => render as plain prose
+  style: TextStyle;
 }
 
 export interface GraphNode {
@@ -68,7 +85,50 @@ export interface ClockObj extends BaseObj {
   step: number;
 }
 
-export type Obj = TextObj | GraphObj | MatrixObj | PlotObj | StripObj | ClockObj;
+export interface Curve {
+  id: string;
+  expr: string;
+  color: string;
+  on: boolean;
+}
+
+/** A Cartesian plane you pan and zoom inside, with several curves on it. */
+export interface PlaneObj extends BaseObj {
+  kind: "plane";
+  curves: Curve[];
+  cx: number;   // centre, in maths units
+  cy: number;
+  ppu: number;  // pixels per unit
+  w: number;
+  h: number;
+  params: Record<string, number>;
+}
+
+/** z = f(x, y), orbitable. */
+export interface SurfaceObj extends BaseObj {
+  kind: "surface";
+  expr: string;
+  range: number;   // plots over [-range, range]^2
+  res: number;     // grid resolution
+  w: number;
+  h: number;
+  yaw: number;
+  pitch: number;
+  zoom: number;
+  wire: boolean;
+}
+
+export interface ImageObj extends BaseObj {
+  kind: "image";
+  blobKey: string;  // key into the image store
+  w: number;
+  h: number;
+  alt: string;
+}
+
+export type Obj =
+  | TextObj | GraphObj | MatrixObj | PlotObj | StripObj | ClockObj
+  | PlaneObj | SurfaceObj | ImageObj;
 
 export type Spec =
   | { kind: "text"; latex: string | null; raw: string }
@@ -76,6 +136,9 @@ export type Spec =
   | { kind: "matrix"; rows: number; cols: number; cells?: string[][]; label?: string; headers?: string[] }
   | { kind: "plot"; exprs: string[]; from?: number; to?: number }
   | { kind: "strip"; from?: number; to: number; rule?: string }
-  | { kind: "clock"; n: number; step?: number };
+  | { kind: "clock"; n: number; step?: number }
+  | { kind: "plane"; exprs: string[]; cx?: number; cy?: number; ppu?: number }
+  | { kind: "surface"; expr: string; range?: number }
+  | { kind: "image"; blobKey: string; w: number; h: number; alt?: string };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
