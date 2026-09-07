@@ -7,6 +7,25 @@ objects instead of a closed set.
 
 Everything here is deterministic. No model in the loop.
 
+## Built so far
+
+| | status |
+|---|---|
+| S1 Expression | ✅ typed freely, rendered with KaTeX |
+| S2 Binding | ⬜ not yet — values do not flow between objects |
+| S3 Manipulation | ✅ simplify · expand · factor · solve · diff · integrate · **substitute · eliminate** |
+| S4 Ink | ⬜ not yet — no freehand layer |
+| P1 Grid | ✅ matrices (rank, det, trace) and Cayley tables (full group axioms) |
+| P2 Graph | ✅ 12 families, drag/rewire, real planarity, girth, χ, diameter, cliques |
+| P3 Plot | ✅ multiple curves, pan/zoom range |
+| P4 Strip | ✅ 8 predicates + residues, divisors, multiples |
+| P5 Set | ⬜ not yet |
+| T6–T11 | ✅ modular clock only; the rest not yet |
+
+Nearest gaps worth closing, in order: **S2 bindings** (so a graph's V and E can
+feed an inequality), **S4 ink** (the mess layer the whole idea rests on), and
+**P5 sets**.
+
 ---
 
 ## Substrate

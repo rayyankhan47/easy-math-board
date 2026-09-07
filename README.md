@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Margin
 
-## Getting Started
-
-First, run the development server:
+A whiteboard for doing maths for fun. Infinite canvas, no syntax to learn, no
+account, no AI — everything it computes it computes for real.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How it works
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Click anywhere and type. The right thing appears.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| you type | you get |
+|---|---|
+| `K5` · `petersen` · `graph 6 nodes` · `cycle 7` | a graph you can drag and rewire |
+| `matrix 3x3` · `identity 4` · `cayley 5` | an editable grid, live properties |
+| `plot sin(x)/x` · `plot x^2, x^3 from -3 to 3` | curves |
+| `primes to 100` · `divisors of 60` · `mod 7 = 3` | an integer strip |
+| `clock 12 step 5` | ℤ_n as a dial |
+| `V - E + F = 2` · `alpha >= pi` | rendered maths |
+| `WHY???` | `WHY???`, untouched |
 
-## Learn More
+Press `?` for everything it knows — that list is generated from the command
+registry, so it is never out of date. Suggestions appear as you type, so
+nothing has to be memorised first.
 
-To learn more about Next.js, take a look at the following resources:
+## The part that matters
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Select a line and you can simplify, expand, factor, solve, differentiate or
+integrate it. **Shift-click two equations** and you can substitute one into the
+other, or eliminate a shared variable.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+That is what makes this different from a drawing program. The Euler
+characteristic on a torus, done on the board:
 
-## Deploy on Vercel
+```
+V - E + F = 0        type it
+3F = 2E              type it
+                     shift-click both → eliminate F
+E = 3V               appears
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Swap the first line for `V - E + F = 2` and the same two clicks give you
+`E = 3V - 6`, the planar bound.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Design rules
+
+- **Nothing to learn.** Suggestions and a cheatsheet, never a syntax you must
+  memorise first.
+- **The mess is sacred.** Notes stay exactly as typed. Nothing is beautified.
+- **Results are new lines.** An operation never overwrites what you wrote.
+- **No guessing.** Every number on screen comes from an algorithm — SymPy,
+  NetworkX, or code in `src/lib`. Nothing is inferred by a model.
+
+## Layout
+
+| | |
+|---|---|
+| `src/lib/commands.ts` | the command registry — drives parsing *and* autocomplete |
+| `src/lib/graphs.ts` | graph families, layouts, and the properties computed in JS |
+| `src/lib/predicates.ts` | integer-strip rules (prime, residue, divisor, …) |
+| `src/lib/engine.ts` | client for the maths worker |
+| `public/py-worker.js` | SymPy + NetworkX in Pyodide, off the main thread |
+| `public/pyodide/` | vendored runtime and wheels, so it works offline |
+
+Adding an object type means one entry in `COMMANDS`, one renderer, and one
+inspector panel. See [MATH.md](MATH.md) for what is built and what is not.

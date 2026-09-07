@@ -44,6 +44,30 @@ export const completeBipartite = (m: number, n: number): [number, number][] => {
   return e;
 };
 
+export const tree = (n: number): [number, number][] =>
+  Array.from({ length: Math.max(0, n - 1) }, (_, i) => [Math.floor((i + 1) / 2), i + 1] as [number, number]);
+
+export const grid = (r: number, c: number): [number, number][] => {
+  const e: [number, number][] = [];
+  const id = (i: number, j: number) => i * c + j;
+  for (let i = 0; i < r; i++)
+    for (let j = 0; j < c; j++) {
+      if (j + 1 < c) e.push([id(i, j), id(i, j + 1)]);
+      if (i + 1 < r) e.push([id(i, j), id(i + 1, j)]);
+    }
+  return e;
+};
+
+export const hypercube = (d: number): [number, number][] => {
+  const e: [number, number][] = [];
+  for (let v = 0; v < 1 << d; v++)
+    for (let b = 0; b < d; b++) {
+      const w = v ^ (1 << b);
+      if (v < w) e.push([v, w]);
+    }
+  return e;
+};
+
 export const petersen = (): [number, number][] => [
   [0, 1], [1, 2], [2, 3], [3, 4], [4, 0],
   [5, 7], [7, 9], [9, 6], [6, 8], [8, 5],
@@ -150,4 +174,42 @@ export function chromatic(nodes: GraphNode[], edges: GraphEdge[]): number | null
     if (tryK(k, 0)) return k;
   }
   return n;
+}
+
+
+/** Rectangular layout, for grid graphs. */
+export function gridNodes(r: number, c: number, gap = 46): GraphNode[] {
+  const out: GraphNode[] = [];
+  for (let i = 0; i < r; i++)
+    for (let j = 0; j < c; j++)
+      out.push({ id: `v${i * c + j}`, x: j * gap, y: i * gap, label: String(i * c + j + 1) });
+  return out;
+}
+
+/** Layered layout for rooted trees (child i has parent floor((i-1)/2)). */
+export function treeNodes(n: number, gap = 40): GraphNode[] {
+  const depth = (i: number) => Math.floor(Math.log2(i + 1));
+  const maxD = depth(n - 1);
+  const width = Math.pow(2, maxD);
+  const perLevel: Record<number, number> = {};
+  return Array.from({ length: n }, (_, i) => {
+    const d = depth(i);
+    const k = (perLevel[d] = (perLevel[d] ?? 0) + 1) - 1;
+    const count = Math.min(Math.pow(2, d), n - (Math.pow(2, d) - 1));
+    return {
+      id: `v${i}`,
+      x: ((k + 0.5) / count) * width * gap * 0.5,
+      y: d * gap * 1.1,
+      label: String(i + 1),
+    };
+  });
+}
+
+/** Two rows, for bipartite graphs. */
+export function bipartiteNodes(m: number, n: number, gap = 44): GraphNode[] {
+  const out: GraphNode[] = [];
+  for (let i = 0; i < m; i++) out.push({ id: `v${i}`, x: i * gap, y: 0, label: String(i + 1) });
+  for (let j = 0; j < n; j++)
+    out.push({ id: `v${m + j}`, x: j * gap, y: gap * 2.4, label: String(m + j + 1) });
+  return out;
 }

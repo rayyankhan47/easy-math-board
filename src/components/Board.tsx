@@ -4,13 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/store";
 import { CommandInput } from "./CommandInput";
 import { Inspector } from "./Inspector";
+import { OpsBar } from "./OpsBar";
+import { EngineBadge } from "./EngineBadge";
+import { Help } from "./Help";
 import { TextObject } from "./objects/TextObject";
 import { GraphObject } from "./objects/GraphObject";
 import { MatrixObject } from "./objects/MatrixObject";
+import { PlotObject } from "./objects/PlotObject";
+import { StripObject } from "./objects/StripObject";
+import { ClockObject } from "./objects/ClockObject";
 import type { Obj } from "@/lib/types";
 
 export function Board() {
-  const { objs, pan, zoom, selected, select, move, remove, setView, hydrate } = useBoard();
+  const { objs, pan, zoom, selection, select, move, remove, setView, hydrate } = useBoard();
   const [caret, setCaret] = useState<{ x: number; y: number } | null>(null);
   const surface = useRef<HTMLDivElement>(null);
   const panning = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
@@ -32,14 +38,14 @@ export function Board() {
         setCaret(null);
         select(null);
       }
-      if ((e.key === "Backspace" || e.key === "Delete") && selected && !caret) {
+      if ((e.key === "Backspace" || e.key === "Delete") && selection.length && !caret) {
         e.preventDefault();
-        remove(selected);
+        selection.forEach(remove);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected, caret, remove, select]);
+  }, [selection, caret, remove, select]);
 
   function onSurfaceDown(e: React.PointerEvent) {
     if (e.target !== e.currentTarget && !(e.target as Element).closest?.("[data-surface]")) return;
@@ -90,6 +96,9 @@ export function Board() {
     switch (o.kind) {
       case "graph": return <GraphObject o={o} />;
       case "matrix": return <MatrixObject o={o} />;
+      case "plot": return <PlotObject o={o} />;
+      case "strip": return <StripObject o={o} />;
+      case "clock": return <ClockObject o={o} />;
       default: return <TextObject o={o} />;
     }
   };
@@ -116,13 +125,15 @@ export function Board() {
         {objs.map((o) => (
           <div
             key={o.id}
-            className={`absolute rounded-[4px] p-1.5 ${
-              selected === o.id ? "ring-1 ring-[#5b8def]/60" : "hover:ring-1 hover:ring-[#2b2e35]"
+            className={`absolute w-max rounded-[4px] p-1.5 ${
+              selection.includes(o.id)
+                ? "ring-1 ring-[#5b8def]/60"
+                : "hover:ring-1 hover:ring-[#2b2e35]"
             }`}
             style={{ left: o.x, top: o.y }}
             onPointerDown={(e) => {
               e.stopPropagation();
-              select(o.id);
+              select(o.id, e.shiftKey);
               setCaret(null);
               const w = toWorld(e.clientX, e.clientY);
               dragging.current = { id: o.id, ox: w.x - o.x, oy: w.y - o.y };
@@ -136,14 +147,24 @@ export function Board() {
       </div>
 
       <Inspector />
+      <OpsBar />
 
       {objs.length === 0 && !caret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <p className="font-mono text-[13px] text-[#3a3d44]">
-            click anywhere and start typing
-          </p>
+          <div className="text-center">
+            <p className="font-mono text-[13px] text-[#4a4e57]">click anywhere and start typing</p>
+            <p className="mt-2 font-mono text-[11px] text-[#2f323a]">
+              K5 · matrix 3x3 · plot sin(x)/x · primes to 100 · clock 12 · V - E + F = 2
+            </p>
+            <p className="mt-4 font-mono text-[10px] text-[#26282e]">
+              shift-click two equations to combine them
+            </p>
+          </div>
         </div>
       )}
+
+      <EngineBadge />
+      <Help />
     </div>
   );
 }

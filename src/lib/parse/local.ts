@@ -1,10 +1,7 @@
-import type { Spec } from "../types";
-import * as G from "../graphs";
-
-/* ------------------------------------------------------------------ *
- * The instant path. Every phrase matched here skips the network call. *
- * Anything this returns null for falls through to the model.          *
- * ------------------------------------------------------------------ */
+/* --------------------------------------------------------------- *
+ * Free-form text: is it maths, and if so what is the notation?      *
+ * Object commands live in lib/commands.ts.                          *
+ * --------------------------------------------------------------- */
 
 const GREEK = [
   "alpha","beta","gamma","delta","epsilon","zeta","eta","theta","iota","kappa",
@@ -67,104 +64,4 @@ export function looksLikeMath(s: string): boolean {
   if (!t) return false;
   if (!/[0-9=+\-*/^_<>≤≥(){}\\]/.test(t)) return false;
   return wordiness(t) <= 1;
-}
-
-const num = (s: string | undefined, d = 0) => (s ? parseInt(s, 10) : d);
-const graphSpec = (n: number, edges: [number, number][], label: string): Spec => ({
-  kind: "graph", n, edges, label,
-});
-
-export function parseLocal(input: string): Spec | null {
-  const s = input.trim();
-  if (!s) return null;
-  const l = s.toLowerCase();
-
-  // ---- named + parameterised graphs ----
-  let m: RegExpMatchArray | null;
-
-  if ((m = l.match(/^k[_\s]*(\d+)\s*,\s*(\d+)$/)) || (m = l.match(/^(?:complete\s+)?bipartite\s+(\d+)\s*(?:,|x|by|and)\s*(\d+)$/))) {
-    const a = num(m[1]), b = num(m[2]);
-    return graphSpec(a + b, G.completeBipartite(a, b), `K_{${a},${b}}`);
-  }
-  if ((m = l.match(/^k[_\s]*(\d+)$/)) || (m = l.match(/^complete\s+graph\s+(?:on\s+|with\s+)?(\d+)/))) {
-    const n = num(m[1]);
-    return graphSpec(n, G.complete(n), `K_${n}`);
-  }
-  if (/^petersen(\s+graph)?$/.test(l)) return graphSpec(10, G.petersen(), "Petersen");
-  if ((m = l.match(/^cycle\s*(?:graph\s*)?(?:c[_\s]*)?(\d+)/)) || (m = l.match(/^c[_\s]*(\d+)$/))) {
-    const n = num(m[1]);
-    return graphSpec(n, G.cycle(n), `C_${n}`);
-  }
-  if ((m = l.match(/^path\s*(?:graph\s*)?(\d+)/))) {
-    const n = num(m[1]);
-    return graphSpec(n, G.path(n), `P_${n}`);
-  }
-  if ((m = l.match(/^star\s*(?:graph\s*)?(\d+)/))) {
-    const n = num(m[1]);
-    return graphSpec(n, G.star(n), `Star_${n}`);
-  }
-  if ((m = l.match(/^wheel\s*(?:graph\s*)?(\d+)/))) {
-    const n = num(m[1]);
-    return graphSpec(n, G.wheel(n), `W_${n}`);
-  }
-  if ((m = l.match(/^random\s+graph\s+(?:on\s+|with\s+)?(\d+)(?:\s*(?:nodes?|vertices|vertexes))?(?:\s*(?:p\s*=?\s*)?(0?\.\d+))?/))) {
-    const n = num(m[1]);
-    return graphSpec(n, G.randomEdges(n, m[2] ? parseFloat(m[2]) : 0.35), "random");
-  }
-  // "graph 5 nodes" / "5 node graph" / "graph with 6 vertices" / "empty graph 4"
-  if (
-    (m = l.match(/^(?:empty\s+)?graph\s+(?:with\s+|on\s+|of\s+)?(\d+)\s*(?:nodes?|vertices|vertexes|pts?|points?)?$/)) ||
-    (m = l.match(/^(\d+)[\s-]*(?:node|vertex|vertice)s?\s+graph$/))
-  ) {
-    return graphSpec(num(m[1]), [], "graph");
-  }
-
-  // ---- matrices ----
-  if ((m = l.match(/^(?:identity|eye)\s*(?:matrix\s*)?(\d+)$/)) || (m = l.match(/^i[_\s]*(\d+)$/))) {
-    const n = num(m[1]);
-    const cells = Array.from({ length: n }, (_, i) =>
-      Array.from({ length: n }, (_, j) => (i === j ? "1" : "0")),
-    );
-    return { kind: "matrix", rows: n, cols: n, cells, label: `I_${n}` };
-  }
-  if ((m = l.match(/^(zeros?|ones?)\s*(?:matrix\s*)?(\d+)\s*(?:x|by|\*|,)\s*(\d+)$/))) {
-    const v = m[1].startsWith("zero") ? "0" : "1";
-    const r = num(m[2]), c = num(m[3]);
-    return { kind: "matrix", rows: r, cols: c, cells: Array.from({ length: r }, () => Array(c).fill(v)) };
-  }
-  if ((m = l.match(/^random\s+matrix\s+(\d+)\s*(?:x|by|\*|,)\s*(\d+)$/))) {
-    const r = num(m[1]), c = num(m[2]);
-    return {
-      kind: "matrix", rows: r, cols: c,
-      cells: Array.from({ length: r }, () =>
-        Array.from({ length: c }, () => String(Math.floor(Math.random() * 19) - 9)),
-      ),
-    };
-  }
-  if (
-    (m = l.match(/^matrix\s+(\d+)\s*(?:x|by|\*|,)\s*(\d+)$/)) ||
-    (m = l.match(/^(\d+)\s*(?:x|by|\*)\s*(\d+)\s+matrix$/))
-  ) {
-    return { kind: "matrix", rows: num(m[1]), cols: num(m[2]) };
-  }
-  if ((m = l.match(/^matrix\s+(\d+)$/))) {
-    return { kind: "matrix", rows: num(m[1]), cols: num(m[1]) };
-  }
-
-  // ---- math vs. note ----
-  if (looksLikeMath(s)) {
-    const tex = latexify(s);
-    // Spoken phrasing survived as literal words — let the model translate it.
-    if (hasSpokenLeftovers(tex)) return null;
-    return { kind: "text", latex: tex, raw: s };
-  }
-
-  // A scrawl, a note, an aside, or a full sentence that merely mentions
-  // numbers. Those are the point of the board, so they land instantly and
-  // never cost a round-trip. The caret makes objects; it does not answer
-  // questions — asking is a separate gesture.
-  if (!/[0-9=+\-*/^_<>≤≥\\]/.test(s) || wordiness(s) >= 3)
-    return { kind: "text", latex: null, raw: s };
-
-  return null;
 }

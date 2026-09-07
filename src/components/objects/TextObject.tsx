@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Tex } from "../Tex";
 import { useBoard } from "@/lib/store";
-import { parse } from "@/lib/parse";
+import { parse } from "@/lib/commands";
 import type { TextObj } from "@/lib/types";
 
 export function TextObject({ o }: { o: TextObj }) {
@@ -17,12 +17,12 @@ export function TextObject({ o }: { o: TextObj }) {
     if (editing) ref.current?.select();
   }, [editing]);
 
-  async function commit() {
+  function commit() {
     setEditing(false);
     const next = draft.trim();
     if (!next) return remove(o.id);
     if (next === o.raw) return;
-    const spec = await parse(next);
+    const spec = parse(next);
     update<TextObj>(o.id, {
       raw: next,
       latex: spec.kind === "text" ? spec.latex : null,
@@ -39,7 +39,7 @@ export function TextObject({ o }: { o: TextObj }) {
         onBlur={commit}
         onKeyDown={(e) => {
           e.stopPropagation();
-          if (e.key === "Enter") void commit();
+          if (e.key === "Enter") commit();
           if (e.key === "Escape") {
             setDraft(o.raw);
             setEditing(false);
