@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  color-scheme: dark;
+}
+
+/* KaTeX inherits the board's ink rather than its own black. */
+.katex {
+  color: inherit;
+  font-size: 1.05em;
+}
+
+::selection {
+  background: #5b8def33;
+}
