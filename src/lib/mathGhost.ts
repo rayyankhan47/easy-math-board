@@ -28,5 +28,5 @@ export function mathGhost(value: string): string | null {
 export const useMathGhost = (value: string) => useMemo(() => mathGhost(value), [value]);
 
 /** True when the caret sits at the very end, where accepting makes sense. */
-export const atEnd = (el: HTMLInputElement | null) =>
+export const atEnd = (el: HTMLInputElement | HTMLTextAreaElement | null) =>
   !!el && el.selectionStart === el.value.length && el.selectionEnd === el.value.length;

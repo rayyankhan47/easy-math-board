@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { DEFAULT_STYLE, uid } from "@/lib/types";
 import type {
   ClockObj, GraphObj, ImageObj, MatrixObj, PlaneObj, PlotObj, StripObj,
-  SurfaceObj, TextObj, FontFamily, InkObj, ShapeObj,
+  SurfaceObj, TextObj, FontFamily, InkObj, ShapeObj, Align,
 } from "@/lib/types";
 import { CURVE_INK } from "./objects/PlaneObject";
 import { HIGHLIGHT_COLORS, INK_COLORS, SIZES } from "@/lib/ink";
@@ -357,8 +357,34 @@ const INK = [
   { name: "red", value: "#d44c47" },
 ];
 
+const ALIGN_ICON = (a: Align) => {
+  // three rules; the short one sits where the alignment puts it
+  const short = a === "left" ? "2" : a === "center" ? "4" : "6";
+  return (
+    <svg viewBox="0 0 14 10" width="14" height="10" aria-hidden>
+      {[0, 4, 8].map((y, i) => (
+        <rect
+          key={y}
+          x={i === 1 ? short : "2"}
+          y={y + 1}
+          width={i === 1 ? 6 : 10}
+          height="1.2"
+          rx="0.6"
+          fill="currentColor"
+        />
+      ))}
+    </svg>
+  );
+};
+
+const ALIGNS: { id: Align; title: string }[] = [
+  { id: "left", title: "left" },
+  { id: "center", title: "centre" },
+  { id: "right", title: "right" },
+];
+
 function TextPanel({ o, update }: { o: TextObj; update: Update }) {
-  const st = o.style ?? DEFAULT_STYLE;
+  const st = { ...DEFAULT_STYLE, ...(o.style ?? {}) };
   const patch = (p: Partial<typeof st>) => update<TextObj>(o.id, { style: { ...st, ...p } });
 
   return (
@@ -395,6 +421,43 @@ function TextPanel({ o, update }: { o: TextObj; update: Update }) {
           <span className="italic">I</span>
         </Toggle>
       </div>
+
+      <Label>alignment</Label>
+      <div className="flex gap-1">
+        {ALIGNS.map((a) => (
+          <Toggle
+            key={a.id}
+            on={st.align === a.id}
+            onClick={() => {
+              // Alignment needs a box to align inside; give it one.
+              if (!o.w) update<TextObj>(o.id, { w: 260 });
+              patch({ align: a.id });
+            }}
+          >
+            <span title={a.title} className="flex justify-center">{ALIGN_ICON(a.id)}</span>
+          </Toggle>
+        ))}
+      </div>
+
+      <Label>width</Label>
+      <div className="flex items-center gap-2">
+        <input
+          type="range" min={80} max={640} step={10}
+          value={o.w ?? 260}
+          disabled={!o.w}
+          onChange={(e) => update<TextObj>(o.id, { w: +e.target.value })}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="h-1 flex-1 accent-[var(--accent)] disabled:opacity-40"
+        />
+        <Btn onClick={() => update<TextObj>(o.id, { w: o.w ? null : 260 })}>
+          {o.w ? "auto" : "fixed"}
+        </Btn>
+      </div>
+      <p className="mt-1.5 text-[10px] leading-relaxed text-[var(--text-ghost)]">
+        {o.w
+          ? "wraps at this width · shift-enter for a hard break"
+          : "hugs its text · set a width to wrap"}
+      </p>
 
       <Label>colour</Label>
       <div className="flex flex-wrap gap-1.5">

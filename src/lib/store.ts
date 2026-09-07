@@ -121,7 +121,10 @@ function specToObj(spec: Spec, at: { x: number; y: number }): Obj {
         tool: spec.tool, points: spec.points, color: spec.color, size: spec.size,
       };
     default:
-      return { ...base, kind: "text", raw: spec.raw, latex: spec.latex, style: { ...DEFAULT_STYLE } };
+      return {
+        ...base, kind: "text", raw: spec.raw, latex: spec.latex,
+        style: { ...DEFAULT_STYLE }, w: null,
+      };
   }
 }
 

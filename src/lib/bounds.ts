@@ -35,7 +35,13 @@ export function objSize(o: Obj): { w: number; h: number } {
     }
     default: {
       const size = o.style?.size ?? 16;
-      return { w: Math.max(40, o.raw.length * size * 0.55), h: size * 1.6 };
+      const perLine = size * 0.55;
+      if (o.w) {
+        const cols = Math.max(1, Math.floor(o.w / perLine));
+        const lines = o.raw.split("\n").reduce((n, l) => n + Math.max(1, Math.ceil(l.length / cols)), 0);
+        return { w: o.w, h: lines * size * 1.5 };
+      }
+      return { w: Math.max(40, o.raw.length * perLine), h: size * 1.6 };
     }
   }
 }

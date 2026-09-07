@@ -81,6 +81,10 @@ export function Help() {
             <li>click empty space → type · ↑↓ pick a suggestion · tab to fill</li>
             <li>double-click any line to edit it</li>
             <li>
+              pull a text box's right edge to set a width and it wraps — double-click that handle
+              for automatic. Shift-enter makes a hard line break
+            </li>
+            <li>
               select something and press <span className="font-mono">/</span> — the menu changes to
               match what you picked. A two-variable function offers ∂/∂x, ∂/∂y, gradient and
               Hessian; a graph offers its adjacency matrix

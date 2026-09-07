@@ -11,16 +11,19 @@ export interface BaseObj {
 
 export type FontFamily = "sans" | "serif" | "mono";
 
+export type Align = "left" | "center" | "right";
+
 export interface TextStyle {
   font: FontFamily;
   size: number;
   color: string | null;   // null => inherit the theme's ink
   bold: boolean;
   italic: boolean;
+  align: Align;
 }
 
 export const DEFAULT_STYLE: TextStyle = {
-  font: "sans", size: 16, color: null, bold: false, italic: false,
+  font: "sans", size: 16, color: null, bold: false, italic: false, align: "left",
 };
 
 /** Anything you type. Renders as math when it looks like math, prose otherwise. */
@@ -29,6 +32,8 @@ export interface TextObj extends BaseObj {
   raw: string;
   latex: string | null; // null => render as plain prose
   style: TextStyle;
+  /** Fixed width in px, so the text wraps. null means it hugs its content. */
+  w: number | null;
 }
 
 export interface GraphNode {

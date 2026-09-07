@@ -26,6 +26,7 @@ import { strokeHit, strokePath } from "@/lib/ink";
 import { SettingsButton } from "./Settings";
 import { Minimap } from "./Minimap";
 import { ResizeHandles } from "./ResizeHandles";
+import { WidthHandle } from "./WidthHandle";
 import { useSettings, SCALE } from "@/lib/settings";
 import { objSize } from "@/lib/bounds";
 import { imageFrom, storeImage } from "@/lib/images";
@@ -351,6 +352,9 @@ export function Board() {
             {render(o)}
             {selection.length === 1 && selection[0] === o.id && "w" in o && "h" in o && (
               <ResizeHandles o={o as Extract<Obj, { w: number; h: number }>} />
+            )}
+            {selection.length === 1 && selection[0] === o.id && o.kind === "text" && (
+              <WidthHandle o={o} />
             )}
           </div>
         ))}
