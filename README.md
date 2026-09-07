@@ -47,7 +47,14 @@ Swap the first line for `V - E + F = 2` and the same two clicks give you
 `E = 3V - 6`, the planar bound.
 
 There is a toolbar down the left for everything, if you would rather click than
-type — hover an icon for a moment and it tells you what it is.
+type — hover an icon for a moment and it tells you what it is. The top two are
+tools rather than objects: **select** (`V`) drags a box over several objects,
+**move** (`H`) pans the board. Holding space pans from either.
+
+Selected objects get corner handles; dragging one keeps the proportions, and
+shift stretches freely. A minimap in the corner shows the whole workspace and
+jumps you anywhere in it. The gear holds theme, grid, snapping, interface size,
+angle units, and the accessibility switches.
 
 ## Working together
 

@@ -8,6 +8,7 @@ import { parse } from "@/lib/commands";
 import { storeImage } from "@/lib/images";
 import type { Spec } from "@/lib/types";
 import { useSettings } from "@/lib/settings";
+import { objSize } from "@/lib/bounds";
 
 /* Hand-drawn 16px glyphs — no icon dependency, and they inherit the theme. */
 const S = { fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -105,12 +106,19 @@ export function Toolbar({ onText }: { onText: (at: { x: number; y: number }) => 
   const where = () => {
     let x = (vw() * 0.42 - pan.x) / zoom;
     let y = (vh() * 0.32 - pan.y) / zoom;
-    const taken = useBoard.getState().objs;
-    for (let i = 0; i < 40; i++) {
-      const clash = taken.some((o) => Math.abs(o.x - x) < 60 && Math.abs(o.y - y) < 60);
-      if (!clash) break;
-      x += 34;
-      y += 34;
+    // Step past anything already there, measuring real footprints so large
+    // objects do not end up stacked.
+    const taken = useBoard.getState().objs.map((o) => ({ x: o.x, y: o.y, ...objSize(o) }));
+    for (let i = 0; i < 60; i++) {
+      const hit = taken.find(
+        (r) => x < r.x + r.w + 16 && x + 300 > r.x && y < r.y + r.h + 16 && y + 220 > r.y,
+      );
+      if (!hit) break;
+      x = hit.x + hit.w + 28;
+      if (x > (vw() - pan.x) / zoom - 260) {
+        x = (vw() * 0.14 - pan.x) / zoom;
+        y = hit.y + hit.h + 28;
+      }
     }
     return { x, y };
   };

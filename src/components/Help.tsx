@@ -89,6 +89,14 @@ export function Help() {
             <li>drag an object by the ⋯ grip above it</li>
             <li>the left toolbar spawns anything — hover an icon for what it is</li>
             <li>
+              <span className="font-mono">V</span> select ·{" "}
+              <span className="font-mono">H</span> move · hold{" "}
+              <span className="font-mono">space</span> to pan from any tool
+            </li>
+            <li>drag a box over empty canvas to select several at once</li>
+            <li>drag a corner of a selected object to resize — shift stretches freely</li>
+            <li>the minimap in the corner jumps you anywhere on the board</li>
+            <li>
               <span className="text-[var(--accent-soft)]">Share</span> makes a link; anyone who
               opens it joins the same board, with their own cursor
             </li>
